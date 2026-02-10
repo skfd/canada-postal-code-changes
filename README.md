@@ -54,3 +54,33 @@ The system uses multiple data sources:
 - The database file is generated and excluded from git
 - Only source code, configuration, and documentation are tracked in version control
 - Data processing results are regenerated from source code and raw data
+
+## License
+
+This software is licensed under the [MIT License](LICENSE).
+
+### Data Source Attribution
+
+This project uses data from the following sources, each with their own licensing terms:
+
+- **Statistics Canada National Address Register (NAR)** - [Statistics Canada Open Licence](https://www.statcan.gc.ca/en/reference/licence)
+- **Geocoder.ca** - [Creative Commons Attribution 2.5 Canada (CC BY 2.5)](https://creativecommons.org/licenses/by/2.5/ca/)
+- **GeoNames** - [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
+
+When using or redistributing this software with data:
+- Maintain attribution to the original data sources as listed above
+- Respect the license terms of each data source
+- See [data-spec.md](data-spec.md) for detailed information about data sources and their licensing
+
+### Dependencies
+
+This project uses the following open-source libraries:
+- pandas (BSD-3-Clause)
+- pyarrow (Apache-2.0)
+- requests (Apache-2.0)
+- tqdm (MIT/MPL-2.0)
+- click (BSD-3-Clause)
+- fastapi (MIT)
+- uvicorn (BSD)
+
+All dependencies are compatible with the MIT license of this software.

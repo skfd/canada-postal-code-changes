@@ -1,4 +1,13 @@
-"""API routes for the postal code change tracker."""
+"""API routes for the postal code change tracker.
+
+Copyright (c) 2026 Canadian Postal Code Change Tracking System Contributors
+Licensed under the MIT License - see LICENSE file for details.
+
+Data sources used by this software have their own licenses:
+- Statistics Canada NAR: Statistics Canada Open Licence
+- Geocoder.ca: CC BY 2.5 Canada
+- GeoNames: CC BY 4.0
+"""
 
 from fastapi import APIRouter, Query
 
