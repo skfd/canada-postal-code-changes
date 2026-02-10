@@ -232,14 +232,33 @@ def clear_snapshots(
     conn.close()
 
 
+def clear_merged_data(db_path: Path | None = None) -> None:
+    """Delete all merged snapshots and changes (rebuilt from real sources)."""
+    conn = get_connection(db_path)
+    conn.execute("DELETE FROM postal_code_snapshots WHERE source_type = 'merged'")
+    conn.execute("DELETE FROM postal_code_changes WHERE source_type = 'merged'")
+    conn.commit()
+    conn.close()
+
+
 def rebuild_summary(db_path: Path | None = None) -> int:
     """Rebuild the postal_code_summary table from snapshots and changes.
 
-    Returns the number of rows inserted.
+    Uses merged snapshots/changes if available, otherwise falls back to
+    all source types. Returns the number of rows inserted.
     """
     conn = get_connection(db_path)
 
-    # Get the latest snapshot date across all sources
+    # Check if merged data exists
+    has_merged = conn.execute(
+        "SELECT 1 FROM postal_code_snapshots WHERE source_type = 'merged' LIMIT 1"
+    ).fetchone()
+
+    # Use merged for aggregation and changes if available
+    snapshot_filter = "source_type = 'merged'" if has_merged else "1=1"
+    change_filter = "source_type = 'merged'" if has_merged else "1=1"
+
+    # Get the latest snapshot date (across all sources for is_active)
     row = conn.execute(
         "SELECT MAX(snapshot_date) AS max_date FROM postal_code_snapshots"
     ).fetchone()
@@ -251,7 +270,7 @@ def rebuild_summary(db_path: Path | None = None) -> int:
 
     conn.execute("DELETE FROM postal_code_summary")
     conn.execute(
-        """
+        f"""
         WITH latest AS (
             SELECT
                 postal_code,
@@ -264,6 +283,7 @@ def rebuild_summary(db_path: Path | None = None) -> int:
                     ORDER BY snapshot_date DESC
                 ) AS rn
             FROM postal_code_snapshots
+            WHERE {snapshot_filter}
         ),
         agg AS (
             SELECT
@@ -273,11 +293,19 @@ def rebuild_summary(db_path: Path | None = None) -> int:
                 CASE WHEN MAX(snapshot_date) = ? THEN 1 ELSE 0 END AS is_active,
                 GROUP_CONCAT(DISTINCT source_type) AS sources
             FROM postal_code_snapshots
+            WHERE {snapshot_filter}
+            GROUP BY postal_code
+        ),
+        real_sources AS (
+            SELECT postal_code, GROUP_CONCAT(DISTINCT source_type) AS sources
+            FROM postal_code_snapshots
+            WHERE source_type != 'merged'
             GROUP BY postal_code
         ),
         change_counts AS (
             SELECT postal_code, COUNT(*) AS change_count
             FROM postal_code_changes
+            WHERE {change_filter}
             GROUP BY postal_code
         )
         INSERT INTO postal_code_summary
@@ -296,10 +324,11 @@ def rebuild_summary(db_path: Path | None = None) -> int:
             SUBSTR(a.postal_code, 1, 3),
             CASE WHEN SUBSTR(a.postal_code, 2, 1) = '0' THEN 1 ELSE 0 END,
             COALESCE(c.change_count, 0),
-            a.sources
+            COALESCE(rs.sources, a.sources)
         FROM agg a
         JOIN latest l ON l.postal_code = a.postal_code AND l.rn = 1
         LEFT JOIN change_counts c ON c.postal_code = a.postal_code
+        LEFT JOIN real_sources rs ON rs.postal_code = a.postal_code
         """,
         (max_date,),
     )

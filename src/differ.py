@@ -200,6 +200,145 @@ def store_changes(changes: pd.DataFrame) -> int:
     return len(changes)
 
 
+def build_merged_snapshots() -> list[str]:
+    """Build merged snapshots combining all sources at each time point.
+
+    For each unique snapshot date across all sources, creates a merged view
+    that is the union of all postal codes from all sources known at that date.
+    For dates where a source has no exact match, the most recent earlier
+    snapshot from that source is carried forward.
+
+    When a postal code exists in multiple sources, fields are merged with
+    priority: geocoder/geonames (lat/lon) > nar (address_count, csd_code).
+
+    Returns the sorted list of merged snapshot dates.
+    """
+    conn = db.get_connection()
+
+    # Clear old merged data
+    conn.execute("DELETE FROM postal_code_snapshots WHERE source_type = 'merged'")
+    conn.commit()
+
+    # Get all (source_type, snapshot_date) pairs for real sources
+    source_dates = conn.execute(
+        """
+        SELECT DISTINCT source_type, snapshot_date
+        FROM postal_code_snapshots
+        WHERE source_type != 'merged'
+        ORDER BY snapshot_date
+        """
+    ).fetchall()
+
+    if not source_dates:
+        conn.close()
+        return []
+
+    # Build lookup: source -> sorted list of snapshot dates
+    from collections import defaultdict
+    source_to_dates: dict[str, list[str]] = defaultdict(list)
+    for row in source_dates:
+        source_to_dates[row["source_type"]].append(row["snapshot_date"])
+
+    # All unique dates across all sources
+    all_dates = sorted({row["snapshot_date"] for row in source_dates})
+    sources = sorted(source_to_dates.keys())
+
+    logger.info(
+        "Building merged snapshots: %d dates across %d sources (%s)",
+        len(all_dates), len(sources), ", ".join(sources),
+    )
+
+    merged_dates = []
+
+    for merged_date in all_dates:
+        # For each source, find the latest snapshot_date <= merged_date
+        available = {}
+        for src in sources:
+            candidates = [d for d in source_to_dates[src] if d <= merged_date]
+            if candidates:
+                available[src] = candidates[-1]  # latest <= merged_date
+
+        if not available:
+            continue
+
+        # Load all relevant snapshots
+        dfs = []
+        for src, snap_date in available.items():
+            df = pd.read_sql(
+                """
+                SELECT postal_code, province_abbr, city_name,
+                       latitude, longitude, csd_code, address_count
+                FROM postal_code_snapshots
+                WHERE snapshot_date = ? AND source_type = ?
+                """,
+                conn,
+                params=(snap_date, src),
+            )
+            df["_source"] = src
+            dfs.append(df)
+
+        if not dfs:
+            continue
+
+        combined = pd.concat(dfs, ignore_index=True)
+
+        # Merge duplicates: for each postal_code, combine fields from all sources
+        # Priority: geocoder/geonames for lat/lon, nar for address_count/csd_code
+        # Sort so that sources with lat/lon come first
+        source_priority = {"geocoder": 0, "geonames": 1, "nar": 2}
+        combined["_priority"] = combined["_source"].map(source_priority).fillna(99)
+        combined = combined.sort_values("_priority")
+
+        # For each postal code, take the first non-null value per field
+        merged = combined.groupby("postal_code", sort=False).agg(
+            province_abbr=("province_abbr", "first"),
+            city_name=("city_name", "first"),
+            latitude=("latitude", "first"),
+            longitude=("longitude", "first"),
+            csd_code=("csd_code", "first"),
+            address_count=("address_count", "first"),
+        ).reset_index()
+
+        merged["snapshot_date"] = merged_date
+        merged["source_type"] = "merged"
+
+        insert_cols = [
+            "postal_code", "snapshot_date", "source_type", "province_abbr",
+            "city_name", "latitude", "longitude", "csd_code", "address_count",
+        ]
+        merged[insert_cols].to_sql(
+            "postal_code_snapshots", conn,
+            if_exists="append", index=False, chunksize=5000,
+        )
+        conn.commit()
+
+        merged_dates.append(merged_date)
+        logger.info(
+            "  Merged %s: %d postal codes (from %s)",
+            merged_date, len(merged),
+            ", ".join(f"{s}@{d}" for s, d in available.items()),
+        )
+
+    conn.close()
+    return merged_dates
+
+
+def diff_merged() -> dict[str, int]:
+    """Build merged snapshots from all sources, then diff consecutive pairs.
+
+    Returns {pair_label: change_count}.
+    """
+    logger.info("Building merged snapshots ...")
+    merged_dates = build_merged_snapshots()
+
+    if len(merged_dates) < 2:
+        logger.warning("Need at least 2 merged snapshots to diff, found %d", len(merged_dates))
+        return {}
+
+    logger.info("Diffing %d merged snapshot pairs ...", len(merged_dates) - 1)
+    return diff_all_pairs("merged")
+
+
 def diff_all_pairs(source_type: str = "nar") -> dict[str, int]:
     """Run diffs for all consecutive snapshot pairs.
 

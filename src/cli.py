@@ -161,39 +161,62 @@ def process(source: str, period: str | None, force: bool) -> None:
 @cli.command()
 @click.option(
     "--source",
-    type=click.Choice(["nar", "geocoder", "all"]),
-    default="nar",
-    help="Source to diff",
+    type=click.Choice(["nar", "geocoder", "merged", "all"]),
+    default="all",
+    help="Source to diff (merged combines all sources)",
 )
 @click.option("--from", "from_date", help="Earlier snapshot date")
 @click.option("--to", "to_date", help="Later snapshot date")
 def diff(source: str, from_date: str | None, to_date: str | None) -> None:
     """Run change detection between consecutive snapshots."""
-    from src.differ import diff_all_pairs, diff_snapshots, store_changes
+    from src.differ import diff_all_pairs, diff_merged, diff_snapshots, store_changes
 
     # Update progress tracker
     tracker.update_overall_status("Diff", "In Progress")
 
     start_time = time.time()
-    sources = [source] if source != "all" else ["nar", "geocoder"]
 
-    for src_type in sources:
-        if from_date and to_date:
-            click.echo(f"Diffing {src_type} {from_date} -> {to_date} ...")
+    if source == "merged":
+        # Only run merged diff
+        click.echo("Building and diffing merged snapshots ...")
+        diff_start = time.time()
+        results = diff_merged()
+        diff_duration = time.time() - diff_start
+        total_changes = sum(results.values())
+        for label, count in results.items():
+            click.echo(f"  {label}: {count} changes")
+        click.echo(f"  -> Total: {total_changes} merged changes in {diff_duration:.2f}s")
+    else:
+        # Per-source diffs
+        sources = [source] if source != "all" else ["nar", "geocoder"]
+        for src_type in sources:
+            if from_date and to_date:
+                click.echo(f"Diffing {src_type} {from_date} -> {to_date} ...")
+                diff_start = time.time()
+                changes = diff_snapshots(src_type, from_date, to_date)
+                count = store_changes(changes)
+                diff_duration = time.time() - diff_start
+                click.echo(f"  -> {count} changes detected in {diff_duration:.2f}s")
+            else:
+                click.echo(f"Diffing all {src_type} snapshot pairs ...")
+                diff_start = time.time()
+                results = diff_all_pairs(src_type)
+                diff_duration = time.time() - diff_start
+                total_changes = sum(results.values())
+                for label, count in results.items():
+                    click.echo(f"  {label}: {count} changes")
+                click.echo(f"  -> Total: {total_changes} changes in {diff_duration:.2f}s")
+
+        # Also run merged diff when --source all
+        if source == "all":
+            click.echo("Building and diffing merged snapshots ...")
             diff_start = time.time()
-            changes = diff_snapshots(src_type, from_date, to_date)
-            count = store_changes(changes)
-            diff_duration = time.time() - diff_start
-            click.echo(f"  -> {count} changes detected in {diff_duration:.2f}s")
-        else:
-            click.echo(f"Diffing all {src_type} snapshot pairs ...")
-            diff_start = time.time()
-            results = diff_all_pairs(src_type)
+            results = diff_merged()
             diff_duration = time.time() - diff_start
             total_changes = sum(results.values())
             for label, count in results.items():
                 click.echo(f"  {label}: {count} changes")
-            click.echo(f"  -> Total: {total_changes} changes in {diff_duration:.2f}s")
+            click.echo(f"  -> Total: {total_changes} merged changes in {diff_duration:.2f}s")
 
     # Rebuild summary
     click.echo("Rebuilding summary table ...")
@@ -271,7 +294,7 @@ def reprocess(source: str, rebuild_db: bool) -> None:
         tracker.log_processing_operation("GeoNames", "reprocess", "Completed", duration=process_duration)
 
     # Re-diff
-    from src.differ import diff_all_pairs
+    from src.differ import diff_all_pairs, diff_merged
 
     click.echo("Re-running diffs ...")
     diff_start = time.time()
@@ -280,7 +303,14 @@ def reprocess(source: str, rebuild_db: bool) -> None:
     if source in ("geocoder", "all"):
         diff_all_pairs("geocoder")
     diff_duration = time.time() - diff_start
-    click.echo(f"  -> Diffs completed in {diff_duration:.2f}s")
+    click.echo(f"  -> Per-source diffs completed in {diff_duration:.2f}s")
+
+    # Merged diff
+    click.echo("Building and diffing merged snapshots ...")
+    merged_start = time.time()
+    diff_merged()
+    merged_duration = time.time() - merged_start
+    click.echo(f"  -> Merged diff completed in {merged_duration:.2f}s")
 
     # Rebuild summary
     click.echo("Rebuilding summary ...")
@@ -308,7 +338,7 @@ def reprocess(source: str, rebuild_db: bool) -> None:
 )
 def refresh(source: str) -> None:
     """Check for new data, download, process, and diff."""
-    from src.differ import diff_all_pairs
+    from src.differ import diff_all_pairs, diff_merged
     from src.downloader import download_all_nar, download_geocoder
     from src.parser_geocoder import process_geocoder
     from src.parser_nar import process_all_nar
@@ -366,6 +396,13 @@ def refresh(source: str) -> None:
         diff_all_pairs("geocoder")
         diff_duration = time.time() - diff_start
         click.echo(f"  -> Geocoder.ca diffs completed in {diff_duration:.2f}s")
+
+    # Merged diff (cross-source)
+    click.echo("Building and diffing merged snapshots ...")
+    merged_start = time.time()
+    diff_merged()
+    merged_duration = time.time() - merged_start
+    click.echo(f"  -> Merged diff completed in {merged_duration:.2f}s")
 
     summary_start = time.time()
     count = db.rebuild_summary()
