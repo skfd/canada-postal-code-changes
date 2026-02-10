@@ -8,8 +8,7 @@ data/*.db
 data/processed/
 data/raw/
 
-# Generated static site data
-static-site/data/
+# Note: static-site/data/ is tracked for GitHub Pages deployment
 
 # Package metadata
 *.egg-info/

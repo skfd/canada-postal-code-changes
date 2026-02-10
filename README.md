@@ -32,14 +32,30 @@ This project tracks historical changes to Canadian postal codes (~893,000 unique
 - Log files (`*.log`)
 - Temporary files and OS-specific files
 
+## Live Demo
+
+A static version of the change visualization is available at:
+**[GitHub Pages Demo](https://YOUR_USERNAME.github.io/postal-codes/)** *(update this URL after deployment)*
+
 ## Setup Instructions
+
+### Quick Start (View Static Site Locally)
+
+```bash
+# Generate static site data
+python -m src.cli generate-static
+
+# Open static-site/index.html in your browser
+```
+
+### Full Development Setup
 
 1. Clone the repository
 2. Install dependencies: `pip install -e .`
 3. Download data: `python -m src.cli download`
 4. Process data: `python -m src.cli process`
 5. Run change detection: `python -m src.cli diff`
-6. Start web interface: `python -m src.cli serve`
+6. Start dynamic web interface: `python -m src.cli serve`
 
 ## Data Pipeline
 
