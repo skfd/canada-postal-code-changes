@@ -136,7 +136,7 @@ def parse_nar_snapshot(period: str) -> pd.DataFrame:
                 .agg(
                     province_code=("province_code", "first"),
                     province_abbr_raw=("province_abbr_raw", "first"),
-                    city_name=("city_name", lambda x: x.mode().iloc[0] if len(x) > 0 else None),
+                    city_name=("city_name", lambda x: x.mode().iloc[0] if len(x.mode()) > 0 else x.iloc[0] if len(x) > 0 else None),
                     csd_name=("csd_name", "first"),
                     address_count=("postal_code", "size"),
                 )

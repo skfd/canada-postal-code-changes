@@ -51,34 +51,37 @@ def download(source: str, period: str | None) -> None:
     if source in ("nar", "all"):
         if period:
             click.echo(f"Downloading NAR {period} ...")
-            tracker.log_download_operation("NAR", period, "Started")
             download_start = time.time()
             download_nar(period)
             download_duration = time.time() - download_start
-            tracker.log_download_operation("NAR", period, "Completed", duration=download_duration)
+            tracker.mark_file_downloaded("NAR", period)
+            click.echo(f"  -> NAR {period} downloaded in {download_duration:.2f}s")
         else:
             click.echo("Downloading all NAR snapshots ...")
-            tracker.log_download_operation("NAR", "all", "Started")
             download_start = time.time()
             download_all_nar()
             download_duration = time.time() - download_start
-            tracker.log_download_operation("NAR", "all", "Completed", duration=download_duration)
+            # Mark all NAR periods as downloaded
+            from src.config import NAR_SNAPSHOTS
+            for nar_period in NAR_SNAPSHOTS.keys():
+                tracker.mark_file_downloaded("NAR", nar_period)
+            click.echo(f"  -> All NAR snapshots downloaded in {download_duration:.2f}s")
 
     if source in ("geocoder", "all"):
         click.echo("Downloading Geocoder.ca ...")
-        tracker.log_download_operation("Geocoder.ca", None, "Started")
         download_start = time.time()
         download_geocoder()
         download_duration = time.time() - download_start
-        tracker.log_download_operation("Geocoder.ca", None, "Completed", duration=download_duration)
+        tracker.mark_file_downloaded("Geocoder", "Latest")
+        click.echo(f"  -> Geocoder.ca downloaded in {download_duration:.2f}s")
 
     if source in ("geonames", "all"):
         click.echo("Downloading GeoNames ...")
-        tracker.log_download_operation("GeoNames", None, "Started")
         download_start = time.time()
         download_geonames()
         download_duration = time.time() - download_start
-        tracker.log_download_operation("GeoNames", None, "Completed", duration=download_duration)
+        tracker.mark_file_downloaded("GeoNames", "CA_full")
+        click.echo(f"  -> GeoNames downloaded in {download_duration:.2f}s")
 
     total_duration = time.time() - start_time
     tracker.update_overall_status("Download", "Completed")
@@ -112,40 +115,40 @@ def process(source: str, period: str | None, force: bool) -> None:
     if source in ("nar", "all"):
         if period:
             click.echo(f"Processing NAR {period} ...")
-            tracker.log_processing_operation("NAR", period, "Started")
             process_start = time.time()
             count = process_nar_snapshot(period, force=force)
             process_duration = time.time() - process_start
-            tracker.log_processing_operation("NAR", period, "Completed", output_records=count, duration=process_duration)
-            click.echo(f"  → {count} unique postal codes")
+            # Mark the file as processed with details
+            processed_file = f"nar_{period}_unique.parquet"
+            tracker.mark_file_processed("NAR", period, processed_file=processed_file, size=f"{count} postal codes")
+            click.echo(f"  -> {count} unique postal codes processed in {process_duration:.2f}s")
         else:
             click.echo("Processing all NAR snapshots ...")
-            tracker.log_processing_operation("NAR", "all", "Started")
             process_start = time.time()
             results = process_all_nar(force=force)
             process_duration = time.time() - process_start
             total_count = sum(results.values())
-            tracker.log_processing_operation("NAR", "all", "Completed", output_records=total_count, duration=process_duration)
             for p, c in results.items():
-                click.echo(f"  {p}: {c} postal codes")
+                processed_file = f"nar_{p}_unique.parquet"
+                tracker.mark_file_processed("NAR", p, processed_file=processed_file, size=f"{c} postal codes")
+                click.echo(f"  {p}: {c} postal codes processed")
+            click.echo(f"  -> Total: {total_count} postal codes in {process_duration:.2f}s")
 
     if source in ("geocoder", "all"):
         click.echo("Processing Geocoder.ca ...")
-        tracker.log_processing_operation("Geocoder.ca", None, "Started")
         process_start = time.time()
         count = process_geocoder(force=force)
         process_duration = time.time() - process_start
-        tracker.log_processing_operation("Geocoder.ca", None, "Completed", output_records=count, duration=process_duration)
-        click.echo(f"  -> {count} postal codes")
+        tracker.mark_file_processed("Geocoder", "Latest", processed_file="geocoder_unique.parquet", size=f"{count} postal codes")
+        click.echo(f"  -> {count} postal codes processed in {process_duration:.2f}s")
 
     if source in ("geonames", "all"):
         click.echo("Processing GeoNames ...")
-        tracker.log_processing_operation("GeoNames", None, "Started")
         process_start = time.time()
         count = process_geonames(force=force)
         process_duration = time.time() - process_start
-        tracker.log_processing_operation("GeoNames", None, "Completed", output_records=count, duration=process_duration)
-        click.echo(f"  -> {count} postal codes")
+        tracker.mark_file_processed("GeoNames", "CA_full", processed_file="geonames_unique.parquet", size=f"{count} postal codes")
+        click.echo(f"  -> {count} postal codes processed in {process_duration:.2f}s")
 
     total_duration = time.time() - start_time
     tracker.update_overall_status("Process", "Completed")
@@ -170,30 +173,27 @@ def diff(source: str, from_date: str | None, to_date: str | None) -> None:
 
     # Update progress tracker
     tracker.update_overall_status("Diff", "In Progress")
-    
+
     start_time = time.time()
     sources = [source] if source != "all" else ["nar", "geocoder"]
 
     for src_type in sources:
         if from_date and to_date:
-            click.echo(f"Diffing {src_type} {from_date} → {to_date} ...")
-            tracker.log_diff_operation(src_type, from_date, to_date, "Started")
+            click.echo(f"Diffing {src_type} {from_date} -> {to_date} ...")
             diff_start = time.time()
             changes = diff_snapshots(src_type, from_date, to_date)
             count = store_changes(changes)
             diff_duration = time.time() - diff_start
-            tracker.log_diff_operation(src_type, from_date, to_date, "Completed", changes_detected=count, duration=diff_duration)
-            click.echo(f"  -> {count} changes detected")
+            click.echo(f"  -> {count} changes detected in {diff_duration:.2f}s")
         else:
             click.echo(f"Diffing all {src_type} snapshot pairs ...")
-            tracker.log_diff_operation(src_type, "all", "all", "Started")
             diff_start = time.time()
             results = diff_all_pairs(src_type)
             diff_duration = time.time() - diff_start
             total_changes = sum(results.values())
-            tracker.log_diff_operation(src_type, "all", "all", "Completed", changes_detected=total_changes, duration=diff_duration)
             for label, count in results.items():
                 click.echo(f"  {label}: {count} changes")
+            click.echo(f"  -> Total: {total_changes} changes in {diff_duration:.2f}s")
 
     # Rebuild summary
     click.echo("Rebuilding summary table ...")
@@ -201,6 +201,9 @@ def diff(source: str, from_date: str | None, to_date: str | None) -> None:
     summary_count = db.rebuild_summary()
     summary_duration = time.time() - summary_start
     tracker.add_note(f"Summary rebuilt with {summary_count} postal codes (took {summary_duration:.2f}s)")
+
+    # Update diff status
+    tracker.update_pipeline_stage_status("Diff", "Complete")
 
     total_duration = time.time() - start_time
     tracker.update_overall_status("Diff", "Completed")
@@ -271,14 +274,13 @@ def reprocess(source: str, rebuild_db: bool) -> None:
     from src.differ import diff_all_pairs
 
     click.echo("Re-running diffs ...")
-    tracker.log_diff_operation("All", "reprocess", "reprocess", "Started")
     diff_start = time.time()
     if source in ("nar", "all"):
         diff_all_pairs("nar")
     if source in ("geocoder", "all"):
         diff_all_pairs("geocoder")
     diff_duration = time.time() - diff_start
-    tracker.log_diff_operation("All", "reprocess", "reprocess", "Completed", duration=diff_duration)
+    click.echo(f"  -> Diffs completed in {diff_duration:.2f}s")
 
     # Rebuild summary
     click.echo("Rebuilding summary ...")
@@ -286,6 +288,9 @@ def reprocess(source: str, rebuild_db: bool) -> None:
     count = db.rebuild_summary()
     summary_duration = time.time() - summary_start
     tracker.add_note(f"Summary rebuilt with {count} postal codes (took {summary_duration:.2f}s)")
+
+    # Update diff status
+    tracker.update_pipeline_stage_status("Diff", "Complete")
 
     total_duration = time.time() - start_time
     tracker.update_overall_status("Reprocess", "Completed")
@@ -316,52 +321,59 @@ def refresh(source: str) -> None:
 
     if source in ("nar", "all"):
         click.echo("Checking for NAR updates ...")
-        tracker.log_download_operation("NAR", "refresh", "Started")
         download_start = time.time()
         download_all_nar()
         download_duration = time.time() - download_start
-        tracker.log_download_operation("NAR", "refresh", "Completed", duration=download_duration)
+        # Mark NAR files as downloaded
+        from src.config import NAR_SNAPSHOTS
+        for nar_period in NAR_SNAPSHOTS.keys():
+            tracker.mark_file_downloaded("NAR", nar_period)
+        click.echo(f"  -> NAR updates checked in {download_duration:.2f}s")
         
         click.echo("Processing new NAR data ...")
-        tracker.log_processing_operation("NAR", "refresh", "Started")
         process_start = time.time()
-        process_all_nar(force=False)
+        results = process_all_nar(force=False)
         process_duration = time.time() - process_start
-        tracker.log_processing_operation("NAR", "refresh", "Completed", duration=process_duration)
+        # Mark NAR files as processed
+        for p, c in results.items():
+            processed_file = f"nar_{p}_unique.parquet"
+            tracker.mark_file_processed("NAR", p, processed_file=processed_file, size=f"{c} postal codes")
+        click.echo(f"  -> NAR data processed in {process_duration:.2f}s")
         
         click.echo("Running NAR diffs ...")
-        tracker.log_diff_operation("NAR", "refresh", "refresh", "Started")
         diff_start = time.time()
         diff_all_pairs("nar")
         diff_duration = time.time() - diff_start
-        tracker.log_diff_operation("NAR", "refresh", "refresh", "Completed", duration=diff_duration)
+        click.echo(f"  -> NAR diffs completed in {diff_duration:.2f}s")
 
     if source in ("geocoder", "all"):
         click.echo("Checking Geocoder.ca ...")
-        tracker.log_download_operation("Geocoder.ca", "refresh", "Started")
         download_start = time.time()
         download_geocoder()
         download_duration = time.time() - download_start
-        tracker.log_download_operation("Geocoder.ca", "refresh", "Completed", duration=download_duration)
+        tracker.mark_file_downloaded("Geocoder", "Latest")
+        click.echo(f"  -> Geocoder.ca checked in {download_duration:.2f}s")
         
         click.echo("Processing Geocoder.ca ...")
-        tracker.log_processing_operation("Geocoder.ca", "refresh", "Started")
         process_start = time.time()
-        process_geocoder(force=False)
+        count = process_geocoder(force=False)
         process_duration = time.time() - process_start
-        tracker.log_processing_operation("Geocoder.ca", "refresh", "Completed", duration=process_duration)
+        tracker.mark_file_processed("Geocoder", "Latest", processed_file="geocoder_unique.parquet", size=f"{count} postal codes")
+        click.echo(f"  -> Geocoder.ca processed in {process_duration:.2f}s")
         
         click.echo("Running Geocoder.ca diffs ...")
-        tracker.log_diff_operation("Geocoder.ca", "refresh", "refresh", "Started")
         diff_start = time.time()
         diff_all_pairs("geocoder")
         diff_duration = time.time() - diff_start
-        tracker.log_diff_operation("Geocoder.ca", "refresh", "refresh", "Completed", duration=diff_duration)
+        click.echo(f"  -> Geocoder.ca diffs completed in {diff_duration:.2f}s")
 
     summary_start = time.time()
     count = db.rebuild_summary()
     summary_duration = time.time() - summary_start
     tracker.add_note(f"Summary rebuilt with {count} postal codes (took {summary_duration:.2f}s)")
+
+    # Update pipeline stages
+    tracker.update_pipeline_stage_status("Diff", "Complete")
 
     total_duration = time.time() - start_time
     tracker.update_overall_status("Refresh", "Completed")
@@ -460,7 +472,6 @@ def stats(source: str) -> None:
         
         tracker.update_database_status(
             db_path=db.DB_PATH,
-            tables_initialized=True,
             total_postal_codes=row['n'],
             total_changes=total_changes
         )
