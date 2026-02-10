@@ -9,12 +9,15 @@ We skip these for now — lat/lon can be backfilled from Geocoder.ca or GeoNames
 """
 
 import logging
+import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import pandas as pd
 
 from src import db
 from src.config import (
+    FSA_FIRST_LETTER_TO_PROVINCE,
     NAR_CHUNK_SIZE,
     NAR_SNAPSHOTS,
     NUNAVUT_FSAS,
@@ -57,30 +60,97 @@ def _find_address_csvs(extract_dir: Path) -> list[Path]:
 
 
 def _normalize_province(province_code: str, province_abbr: str, postal_code: str) -> str:
-    """Derive the best 2-letter province abbreviation.
-
-    Uses MAIL_PROV_ABVN first, falls back to PROV_CODE numeric mapping.
-    Handles Nunavut/NWT disambiguation for postal codes starting with X.
-    """
-    # Prefer the direct abbreviation from the CSV
+    """Derive the best 2-letter province abbreviation (scalar version)."""
     abbr = str(province_abbr).strip().upper() if pd.notna(province_abbr) else ""
     if len(abbr) != 2:
-        # Fall back to numeric code
         abbr = PROVINCE_CODE_TO_ABBR.get(str(province_code).strip(), "")
     if not abbr and pd.notna(postal_code) and len(str(postal_code)) >= 1:
-        from src.config import FSA_FIRST_LETTER_TO_PROVINCE
         abbr = FSA_FIRST_LETTER_TO_PROVINCE.get(str(postal_code)[0].upper(), "")
-    # Disambiguate X → NU vs NT
     if abbr == "NT" and pd.notna(postal_code) and len(str(postal_code)) >= 3:
         if str(postal_code)[:3].upper() in NUNAVUT_FSAS:
             abbr = "NU"
     return abbr
 
 
+def _normalize_province_vectorized(df: pd.DataFrame) -> pd.Series:
+    """Vectorized province normalization. Operates on the full DataFrame at once."""
+    # Stage 1: Try province_abbr_raw (strip + uppercase, keep only 2-char values)
+    raw = df["province_abbr_raw"].fillna("").str.strip().str.upper()
+    abbr = raw.where(raw.str.len() == 2, other="")
+
+    # Stage 2: Where abbr is empty, fall back to numeric province_code mapping
+    code_mapped = df["province_code"].fillna("").str.strip().map(PROVINCE_CODE_TO_ABBR).fillna("")
+    mask_empty = abbr == ""
+    abbr = abbr.where(~mask_empty, other=code_mapped)
+
+    # Stage 3: Where still empty, fall back to first letter of postal_code
+    first_letter = df["postal_code"].str[0].str.upper()
+    letter_mapped = first_letter.map(FSA_FIRST_LETTER_TO_PROVINCE).fillna("")
+    mask_still_empty = abbr == ""
+    abbr = abbr.where(~mask_still_empty, other=letter_mapped)
+
+    # Stage 4: Nunavut disambiguation -- where abbr=="NT" and FSA is in NUNAVUT_FSAS
+    fsa = df["postal_code"].str[:3].str.upper()
+    is_nunavut = (abbr == "NT") & fsa.isin(NUNAVUT_FSAS)
+    abbr = abbr.where(~is_nunavut, other="NU")
+
+    return abbr
+
+
+def _parse_single_csv(csv_path: Path, chunk_size: int) -> tuple[list[pd.DataFrame], int]:
+    """Parse a single NAR CSV file into aggregated chunks.
+
+    Must be a module-level function (picklable for ProcessPoolExecutor on Windows).
+    Returns (list_of_aggregated_dataframes, total_row_count).
+    """
+    aggregated = []
+    row_count = 0
+
+    for chunk in pd.read_csv(
+        csv_path,
+        usecols=NAR_USECOLS,
+        dtype=str,
+        chunksize=chunk_size,
+        encoding="latin-1",
+        encoding_errors="replace",
+        on_bad_lines="skip",
+    ):
+        row_count += len(chunk)
+        chunk = chunk.rename(columns=NAR_COL_MAP)
+
+        # Clean postal code: strip spaces, uppercase
+        chunk["postal_code"] = (
+            chunk["postal_code"]
+            .str.replace(" ", "", regex=False)
+            .str.upper()
+            .str.strip()
+        )
+        chunk = chunk.dropna(subset=["postal_code"])
+        chunk = chunk[chunk["postal_code"].str.len() == 6]
+
+        if chunk.empty:
+            continue
+
+        grouped = (
+            chunk.groupby("postal_code", sort=False)
+            .agg(
+                province_code=("province_code", "first"),
+                province_abbr_raw=("province_abbr_raw", "first"),
+                city_name=("city_name", "first"),
+                csd_name=("csd_name", "first"),
+                address_count=("postal_code", "size"),
+            )
+            .reset_index()
+        )
+        aggregated.append(grouped)
+
+    return aggregated, row_count
+
+
 def parse_nar_snapshot(period: str) -> pd.DataFrame:
     """Parse all NAR Address CSVs for a snapshot into unique postal codes.
 
-    Reads each per-province CSV in chunks, aggregates, then combines.
+    Uses ProcessPoolExecutor to parse CSV files in parallel.
     Returns a DataFrame with one row per unique postal code.
     """
     info = NAR_SNAPSHOTS.get(period)
@@ -99,50 +169,19 @@ def parse_nar_snapshot(period: str) -> pd.DataFrame:
     all_aggregated = []
     total_rows = 0
 
-    for csv_path in csv_files:
-        logger.info("  Reading %s ...", csv_path.name)
-
-        for chunk in pd.read_csv(
-            csv_path,
-            usecols=NAR_USECOLS,
-            dtype=str,
-            chunksize=NAR_CHUNK_SIZE,
-            encoding="latin-1",
-            encoding_errors="replace",
-            on_bad_lines="skip",
-        ):
-            total_rows += len(chunk)
-
-            # Rename columns
-            chunk = chunk.rename(columns=NAR_COL_MAP)
-
-            # Clean postal code: strip spaces, uppercase
-            chunk["postal_code"] = (
-                chunk["postal_code"]
-                .str.replace(" ", "", regex=False)
-                .str.upper()
-                .str.strip()
-            )
-            # Drop rows with missing/invalid postal codes
-            chunk = chunk.dropna(subset=["postal_code"])
-            chunk = chunk[chunk["postal_code"].str.len() == 6]
-
-            if chunk.empty:
-                continue
-
-            # Group by postal code within this chunk
-            grouped = (
-                chunk.groupby("postal_code", sort=False)
-                .agg(
-                    province_code=("province_code", "first"),
-                    province_abbr_raw=("province_abbr_raw", "first"),
-                    city_name=("city_name", lambda x: x.mode().iloc[0] if len(x.mode()) > 0 else x.iloc[0] if len(x) > 0 else None),
-                    csd_name=("csd_name", "first"),
-                    address_count=("postal_code", "size"),
-                )
-                .reset_index()
-            )
-            all_aggregated.append(grouped)
+    # Parse CSV files in parallel across CPU cores
+    max_workers = min(len(csv_files), os.cpu_count() or 4)
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(_parse_single_csv, csv_path, NAR_CHUNK_SIZE): csv_path
+            for csv_path in csv_files
+        }
+        for future in as_completed(futures):
+            csv_path = futures[future]
+            aggregated, row_count = future.result()
+            logger.info("  Completed %s (%d rows)", csv_path.name, row_count)
+            all_aggregated.extend(aggregated)
+            total_rows += row_count
 
     if not all_aggregated:
         raise ValueError(f"No data found in NAR CSVs for {period}")
@@ -162,13 +201,8 @@ def parse_nar_snapshot(period: str) -> pd.DataFrame:
         .reset_index()
     )
 
-    # Normalize province to 2-letter abbreviation
-    final["province_abbr"] = final.apply(
-        lambda row: _normalize_province(
-            row["province_code"], row["province_abbr_raw"], row["postal_code"]
-        ),
-        axis=1,
-    )
+    # Normalize province to 2-letter abbreviation (vectorized)
+    final["province_abbr"] = _normalize_province_vectorized(final)
 
     # Normalize city names to title case
     final["city_name"] = final["city_name"].str.strip().str.title()
@@ -184,7 +218,7 @@ def parse_nar_snapshot(period: str) -> pd.DataFrame:
     final = final.drop(columns=["province_code", "province_abbr_raw"])
 
     logger.info(
-        "NAR %s: %d total rows → %d unique postal codes",
+        "NAR %s: %d total rows -> %d unique postal codes",
         period,
         total_rows,
         len(final),
@@ -193,28 +227,10 @@ def parse_nar_snapshot(period: str) -> pd.DataFrame:
     return final
 
 
-def process_nar_snapshot(period: str, force: bool = False) -> int:
-    """Parse, save to parquet, and load into database. Returns unique PC count."""
+def _store_nar_snapshot(period: str, df: pd.DataFrame) -> int:
+    """Store a pre-parsed NAR DataFrame into the database. Returns unique PC count."""
     info = NAR_SNAPSHOTS[period]
     snapshot_date = info["reference_date"]
-
-    # Check if already processed
-    if not force:
-        conn = db.get_connection()
-        row = conn.execute(
-            """
-            SELECT processed_at FROM data_sources
-            WHERE source_type = 'nar' AND reference_date = ?
-            """,
-            (snapshot_date,),
-        ).fetchone()
-        conn.close()
-        if row and row["processed_at"]:
-            logger.info("NAR %s already processed, skipping (use --force to reprocess)", period)
-            return 0
-
-    # Parse
-    df = parse_nar_snapshot(period)
 
     # Save processed parquet
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
@@ -233,12 +249,10 @@ def process_nar_snapshot(period: str, force: bool = False) -> int:
     )
 
     # Prepare for insert
+    df = df.copy()
     df["snapshot_date"] = snapshot_date
     df["source_type"] = "nar"
 
-    # Use pandas to_sql for bulk insert
-    # Note: method="multi" can exceed SQLite's variable limit, so we use
-    # the default row-by-row method with a reasonable chunksize
     insert_cols = [
         "postal_code",
         "snapshot_date",
@@ -268,14 +282,82 @@ def process_nar_snapshot(period: str, force: bool = False) -> int:
     return len(df)
 
 
+def process_nar_snapshot(period: str, force: bool = False) -> int:
+    """Parse, save to parquet, and load into database. Returns unique PC count."""
+    info = NAR_SNAPSHOTS[period]
+    snapshot_date = info["reference_date"]
+
+    # Check if already processed
+    if not force:
+        conn = db.get_connection()
+        row = conn.execute(
+            """
+            SELECT processed_at FROM data_sources
+            WHERE source_type = 'nar' AND reference_date = ?
+            """,
+            (snapshot_date,),
+        ).fetchone()
+        conn.close()
+        if row and row["processed_at"]:
+            logger.info("NAR %s already processed, skipping (use --force to reprocess)", period)
+            return 0
+
+    df = parse_nar_snapshot(period)
+    return _store_nar_snapshot(period, df)
+
+
 def process_all_nar(force: bool = False) -> dict[str, int]:
-    """Process all downloaded NAR snapshots. Returns {period: count}."""
-    results = {}
+    """Process all downloaded NAR snapshots in parallel. Returns {period: count}."""
+    # Phase 1: Determine which periods need processing
+    periods_to_process = []
     for period in NAR_SNAPSHOTS:
         extract_dir = RAW_NAR_DIR / period
-        if extract_dir.exists():
-            count = process_nar_snapshot(period, force=force)
-            results[period] = count
-        else:
+        if not extract_dir.exists():
             logger.warning("NAR %s not downloaded, skipping", period)
+            continue
+
+        if not force:
+            info = NAR_SNAPSHOTS[period]
+            snapshot_date = info["reference_date"]
+            conn = db.get_connection()
+            row = conn.execute(
+                "SELECT processed_at FROM data_sources WHERE source_type = 'nar' AND reference_date = ?",
+                (snapshot_date,),
+            ).fetchone()
+            conn.close()
+            if row and row["processed_at"]:
+                logger.info("NAR %s already processed, skipping", period)
+                continue
+
+        periods_to_process.append(period)
+
+    if not periods_to_process:
+        return {}
+
+    # Phase 2: Parse all snapshots in parallel (CPU-bound, no DB access)
+    parsed_results = {}
+    max_workers = min(len(periods_to_process), os.cpu_count() or 4)
+    logger.info("Parsing %d snapshots with %d workers", len(periods_to_process), max_workers)
+
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(parse_nar_snapshot, period): period
+            for period in periods_to_process
+        }
+        for future in as_completed(futures):
+            period = futures[future]
+            try:
+                parsed_results[period] = future.result()
+                logger.info("Parsed NAR %s: %d unique postal codes", period, len(parsed_results[period]))
+            except Exception:
+                logger.exception("Failed to parse NAR %s", period)
+
+    # Phase 3: Write to DB sequentially (SQLite single-writer constraint)
+    results = {}
+    for period in periods_to_process:
+        if period not in parsed_results:
+            continue
+        count = _store_nar_snapshot(period, parsed_results[period])
+        results[period] = count
+
     return results

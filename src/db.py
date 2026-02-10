@@ -252,39 +252,54 @@ def rebuild_summary(db_path: Path | None = None) -> int:
     conn.execute("DELETE FROM postal_code_summary")
     conn.execute(
         """
+        WITH latest AS (
+            SELECT
+                postal_code,
+                province_abbr,
+                city_name,
+                latitude,
+                longitude,
+                ROW_NUMBER() OVER (
+                    PARTITION BY postal_code
+                    ORDER BY snapshot_date DESC
+                ) AS rn
+            FROM postal_code_snapshots
+        ),
+        agg AS (
+            SELECT
+                postal_code,
+                MIN(snapshot_date) AS first_seen,
+                MAX(snapshot_date) AS last_seen,
+                CASE WHEN MAX(snapshot_date) = ? THEN 1 ELSE 0 END AS is_active,
+                GROUP_CONCAT(DISTINCT source_type) AS sources
+            FROM postal_code_snapshots
+            GROUP BY postal_code
+        ),
+        change_counts AS (
+            SELECT postal_code, COUNT(*) AS change_count
+            FROM postal_code_changes
+            GROUP BY postal_code
+        )
         INSERT INTO postal_code_summary
             (postal_code, first_seen, last_seen, is_active,
              province_abbr, city_name, latitude, longitude,
              fsa, is_rural, total_changes, sources)
         SELECT
-            s.postal_code,
-            MIN(s.snapshot_date) AS first_seen,
-            MAX(s.snapshot_date) AS last_seen,
-            CASE WHEN MAX(s.snapshot_date) = ? THEN 1 ELSE 0 END AS is_active,
-            -- province/city/lat/lon from the most recent snapshot
-            (SELECT s2.province_abbr FROM postal_code_snapshots s2
-             WHERE s2.postal_code = s.postal_code
-             ORDER BY s2.snapshot_date DESC LIMIT 1),
-            (SELECT s2.city_name FROM postal_code_snapshots s2
-             WHERE s2.postal_code = s.postal_code
-             ORDER BY s2.snapshot_date DESC LIMIT 1),
-            (SELECT s2.latitude FROM postal_code_snapshots s2
-             WHERE s2.postal_code = s.postal_code
-             ORDER BY s2.snapshot_date DESC LIMIT 1),
-            (SELECT s2.longitude FROM postal_code_snapshots s2
-             WHERE s2.postal_code = s.postal_code
-             ORDER BY s2.snapshot_date DESC LIMIT 1),
-            SUBSTR(s.postal_code, 1, 3),
-            CASE WHEN SUBSTR(s.postal_code, 2, 1) = '0' THEN 1 ELSE 0 END,
+            a.postal_code,
+            a.first_seen,
+            a.last_seen,
+            a.is_active,
+            l.province_abbr,
+            l.city_name,
+            l.latitude,
+            l.longitude,
+            SUBSTR(a.postal_code, 1, 3),
+            CASE WHEN SUBSTR(a.postal_code, 2, 1) = '0' THEN 1 ELSE 0 END,
             COALESCE(c.change_count, 0),
-            GROUP_CONCAT(DISTINCT s.source_type)
-        FROM postal_code_snapshots s
-        LEFT JOIN (
-            SELECT postal_code, COUNT(*) AS change_count
-            FROM postal_code_changes
-            GROUP BY postal_code
-        ) c ON c.postal_code = s.postal_code
-        GROUP BY s.postal_code
+            a.sources
+        FROM agg a
+        JOIN latest l ON l.postal_code = a.postal_code AND l.rn = 1
+        LEFT JOIN change_counts c ON c.postal_code = a.postal_code
         """,
         (max_date,),
     )
