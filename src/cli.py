@@ -136,7 +136,7 @@ def process(source: str, period: str | None, force: bool) -> None:
         count = process_geocoder(force=force)
         process_duration = time.time() - process_start
         tracker.log_processing_operation("Geocoder.ca", None, "Completed", output_records=count, duration=process_duration)
-        click.echo(f"  → {count} postal codes")
+        click.echo(f"  -> {count} postal codes")
 
     if source in ("geonames", "all"):
         click.echo("Processing GeoNames ...")
@@ -145,7 +145,7 @@ def process(source: str, period: str | None, force: bool) -> None:
         count = process_geonames(force=force)
         process_duration = time.time() - process_start
         tracker.log_processing_operation("GeoNames", None, "Completed", output_records=count, duration=process_duration)
-        click.echo(f"  → {count} postal codes")
+        click.echo(f"  -> {count} postal codes")
 
     total_duration = time.time() - start_time
     tracker.update_overall_status("Process", "Completed")
@@ -183,7 +183,7 @@ def diff(source: str, from_date: str | None, to_date: str | None) -> None:
             count = store_changes(changes)
             diff_duration = time.time() - diff_start
             tracker.log_diff_operation(src_type, from_date, to_date, "Completed", changes_detected=count, duration=diff_duration)
-            click.echo(f"  → {count} changes detected")
+            click.echo(f"  -> {count} changes detected")
         else:
             click.echo(f"Diffing all {src_type} snapshot pairs ...")
             tracker.log_diff_operation(src_type, "all", "all", "Started")
@@ -204,7 +204,7 @@ def diff(source: str, from_date: str | None, to_date: str | None) -> None:
 
     total_duration = time.time() - start_time
     tracker.update_overall_status("Diff", "Completed")
-    click.echo(f"  → {summary_count} postal codes in summary")
+    click.echo(f"  -> {summary_count} postal codes in summary")
     click.echo(f"Diff complete. Total time: {total_duration:.2f}s.")
 
 
