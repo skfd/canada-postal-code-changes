@@ -176,6 +176,10 @@ tr:hover td { background: var(--surface2); }
 .badge-csd_changed { background: rgba(66, 165, 245, 0.15); color: var(--blue); }
 .badge-location_shifted { background: rgba(108, 140, 255, 0.15); color: var(--accent); }
 
+/* Change subtype badges */
+.badge-sub-technical { background: rgba(139, 143, 163, 0.15); color: var(--text-muted); }
+.badge-sub-real { background: rgba(76, 175, 80, 0.2); color: var(--green); }
+
 /* Lookup */
 .lookup-bar {
     display: flex;

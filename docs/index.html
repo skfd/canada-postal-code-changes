@@ -78,6 +78,9 @@ td.pc { font-family: var(--mono); letter-spacing: 0.05em; }
 .change-added { color: var(--green); }
 .change-removed { color: var(--red); }
 .change-city { color: var(--yellow); }
+.sub-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+.sub-technical { background: rgba(139,143,163,0.15); color: var(--text-dim); }
+.sub-real { background: rgba(74,222,128,0.15); color: var(--green); }
 
 /* Load more */
 .load-more { display: block; width: 100%; padding: 12px; margin-top: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--accent); cursor: pointer; font-family: var(--font); font-size: 0.9rem; }
@@ -157,10 +160,22 @@ td.pc { font-family: var(--mono); letter-spacing: 0.05em; }
       <div class="filters">
         <input type="text" id="city-search" placeholder="Search postal code or city...">
         <select id="city-prov"><option value="">All Provinces</option></select>
+        <select id="city-subtype">
+          <option value="">All Subtypes</option>
+          <option value="substantive_only">Substantive Only</option>
+          <option value="encoding">Encoding/Mojibake</option>
+          <option value="accent_normalization">Accent Normalization</option>
+          <option value="punctuation">Punctuation</option>
+          <option value="spacing">Spacing</option>
+          <option value="abbreviation">Abbreviation</option>
+          <option value="boundary">Boundary</option>
+          <option value="rename">Rename</option>
+          <option value="substantive">Substantive</option>
+        </select>
       </div>
       <div class="table-wrap">
         <table><thead><tr>
-          <th>Postal Code</th><th>Province</th><th>Old City</th><th>New City</th><th>FSA</th><th>Date</th>
+          <th>Postal Code</th><th>Province</th><th>Old City</th><th>New City</th><th>Subtype</th><th>FSA</th><th>Date</th>
         </tr></thead><tbody id="city-body"></tbody></table>
       </div>
       <button class="load-more" id="city-more" style="display:none">Load more...</button>
@@ -226,7 +241,7 @@ function renderAll() {
   renderProvinces();
   setupTable('removed', state.removed, renderRemovedRow, ['pc','city','prov','fsa']);
   setupTable('added', state.added, renderAddedRow, ['pc','city','prov','fsa']);
-  setupTable('city', state.cityChanged, renderCityRow, ['pc','old','new','prov','fsa']);
+  setupCityTable();
 }
 
 // Summary cards
@@ -351,8 +366,71 @@ function renderAddedRow(r) {
 
 function renderCityRow(r) {
   const tr = document.createElement('tr');
-  tr.innerHTML = `<td class="pc change-city">${r.pc}</td><td>${r.prov}</td><td>${r.old}</td><td>${r.new}</td><td>${r.fsa}</td><td>${r.date}</td>`;
+  const technical = ['encoding','accent_normalization','punctuation','spacing','abbreviation'];
+  const group = technical.includes(r.sub) ? 'technical' : 'real';
+  const subBadge = r.sub ? `<span class="sub-badge sub-${group}">${r.sub}</span>` : '';
+  tr.innerHTML = `<td class="pc change-city">${r.pc}</td><td>${r.prov}</td><td>${r.old}</td><td>${r.new}</td><td>${subBadge}</td><td>${r.fsa}</td><td>${r.date}</td>`;
   return tr;
+}
+
+function setupCityTable() {
+  const data = state.cityChanged;
+  const name = 'city';
+
+  // Province filter
+  const provinces = [...new Set(data.map(r => r.prov).filter(Boolean))].sort();
+  const provSelect = document.getElementById('city-prov');
+  provinces.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p; opt.textContent = p;
+    provSelect.appendChild(opt);
+  });
+
+  const subtypeSelect = document.getElementById('city-subtype');
+
+  let shown = 0;
+  let filtered = data;
+
+  const technicalSubs = ['encoding','accent_normalization','punctuation','spacing','abbreviation'];
+
+  function applyFilter() {
+    const q = document.getElementById('city-search').value.toLowerCase();
+    const prov = provSelect.value;
+    const sub = subtypeSelect.value;
+    filtered = data.filter(r => {
+      if (prov && r.prov !== prov) return false;
+      if (q && !['pc','old','new','prov','fsa'].some(f => (r[f] || '').toLowerCase().includes(q))) return false;
+      if (sub === 'substantive_only') {
+        if (technicalSubs.includes(r.sub)) return false;
+      } else if (sub && r.sub !== sub) {
+        return false;
+      }
+      return true;
+    });
+    shown = 0;
+    document.getElementById('city-body').innerHTML = '';
+    document.getElementById('city-count').textContent = fmt(filtered.length) + ' records';
+    loadMore();
+  }
+
+  function loadMore() {
+    const tbody = document.getElementById('city-body');
+    const end = Math.min(shown + PAGE_SIZE, filtered.length);
+    const frag = document.createDocumentFragment();
+    for (let i = shown; i < end; i++) {
+      frag.appendChild(renderCityRow(filtered[i]));
+    }
+    tbody.appendChild(frag);
+    shown = end;
+    document.getElementById('city-more').style.display = shown < filtered.length ? 'block' : 'none';
+  }
+
+  document.getElementById('city-search').addEventListener('input', applyFilter);
+  provSelect.addEventListener('change', applyFilter);
+  subtypeSelect.addEventListener('change', applyFilter);
+  document.getElementById('city-more').addEventListener('click', loadMore);
+
+  applyFilter();
 }
 
 function fmt(n) { return (n || 0).toLocaleString(); }

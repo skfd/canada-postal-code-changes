@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS postal_code_changes (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     postal_code     TEXT NOT NULL,
     change_type     TEXT NOT NULL,
+    change_subtype  TEXT,
     source_type     TEXT NOT NULL,
     snapshot_before TEXT NOT NULL,
     snapshot_after  TEXT NOT NULL,
@@ -59,6 +60,8 @@ CREATE TABLE IF NOT EXISTS postal_code_changes (
 
 CREATE INDEX IF NOT EXISTS idx_changes_type
     ON postal_code_changes(change_type);
+CREATE INDEX IF NOT EXISTS idx_changes_subtype
+    ON postal_code_changes(change_subtype);
 CREATE INDEX IF NOT EXISTS idx_changes_fsa
     ON postal_code_changes(fsa);
 CREATE INDEX IF NOT EXISTS idx_changes_province
@@ -97,6 +100,15 @@ def get_connection(db_path: Path | None = None) -> sqlite3.Connection:
 def init_db(db_path: Path | None = None) -> None:
     """Create all tables and indexes if they don't exist."""
     conn = get_connection(db_path)
+    # Check if we need to migrate (table exists but missing change_subtype)
+    existing = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='postal_code_changes'"
+    ).fetchone()
+    if existing:
+        columns = [row[1] for row in conn.execute("PRAGMA table_info(postal_code_changes)")]
+        if "change_subtype" not in columns:
+            conn.execute("ALTER TABLE postal_code_changes ADD COLUMN change_subtype TEXT")
+            conn.commit()
     conn.executescript(SCHEMA_SQL)
     conn.close()
 
@@ -238,6 +250,22 @@ def clear_merged_data(db_path: Path | None = None) -> None:
     conn.execute("DELETE FROM postal_code_snapshots WHERE source_type = 'merged'")
     conn.execute("DELETE FROM postal_code_changes WHERE source_type = 'merged'")
     conn.commit()
+    conn.close()
+
+
+def ensure_change_subtype_column(db_path: Path | None = None) -> None:
+    """Add change_subtype column if it doesn't exist (migration)."""
+    conn = get_connection(db_path)
+    columns = [
+        row[1] for row in conn.execute("PRAGMA table_info(postal_code_changes)")
+    ]
+    if "change_subtype" not in columns:
+        conn.execute("ALTER TABLE postal_code_changes ADD COLUMN change_subtype TEXT")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_changes_subtype "
+            "ON postal_code_changes(change_subtype)"
+        )
+        conn.commit()
     conn.close()
 
 

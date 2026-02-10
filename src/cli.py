@@ -583,6 +583,58 @@ def export(fmt: str, output: str | None, source: str) -> None:
     click.echo(f"Exported {len(df)} changes to {output}. Total time: {total_duration:.2f}s.")
 
 
+# ── classify ──────────────────────────────────────────────────────────────────
+
+
+@cli.command()
+def classify() -> None:
+    """Backfill change_subtype for all city_changed records."""
+    from src.classifier import classify_city_change
+
+    start_time = time.time()
+    db.init_db()
+    db.ensure_change_subtype_column()
+
+    conn = db.get_connection()
+
+    # Get all city_changed records that need classification
+    rows = conn.execute(
+        "SELECT id, old_value, new_value FROM postal_code_changes "
+        "WHERE change_type = 'city_changed'"
+    ).fetchall()
+
+    if not rows:
+        click.echo("No city_changed records to classify.")
+        conn.close()
+        return
+
+    click.echo(f"Classifying {len(rows)} city_changed records ...")
+
+    # Classify in batches and update
+    batch_size = 5000
+    counts: dict[str, int] = {}
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i:i + batch_size]
+        updates = []
+        for row in batch:
+            subtype = classify_city_change(row["old_value"], row["new_value"])
+            counts[subtype] = counts.get(subtype, 0) + 1
+            updates.append((subtype, row["id"]))
+        conn.executemany(
+            "UPDATE postal_code_changes SET change_subtype = ? WHERE id = ?",
+            updates,
+        )
+        conn.commit()
+        click.echo(f"  Processed {min(i + batch_size, len(rows))}/{len(rows)}")
+
+    conn.close()
+
+    duration = time.time() - start_time
+    click.echo(f"\nClassification complete in {duration:.2f}s:")
+    for subtype, count in sorted(counts.items(), key=lambda x: -x[1]):
+        click.echo(f"  {subtype:25s} {count:>8,}")
+
+
 # ── generate-static ───────────────────────────────────────────────────────────
 
 

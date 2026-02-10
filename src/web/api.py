@@ -111,6 +111,8 @@ def list_changes(
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=500),
     change_type: str | None = None,
+    change_subtype: str | None = None,
+    substantive_only: bool = False,
     province: str | None = None,
     fsa: str | None = None,
     source: str = "nar",
@@ -127,6 +129,13 @@ def list_changes(
     if change_type:
         conditions.append("change_type = ?")
         params.append(change_type)
+    if change_subtype:
+        conditions.append("change_subtype = ?")
+        params.append(change_subtype)
+    if substantive_only:
+        conditions.append(
+            "(change_subtype IS NULL OR change_subtype IN ('substantive', 'boundary', 'rename'))"
+        )
     if province:
         conditions.append("province_abbr = ?")
         params.append(province)
@@ -155,7 +164,7 @@ def list_changes(
     offset = (page - 1) * per_page
     rows = conn.execute(
         f"""
-        SELECT postal_code, change_type, source_type,
+        SELECT postal_code, change_type, change_subtype, source_type,
                snapshot_before, snapshot_after,
                old_value, new_value, province_abbr, fsa
         FROM postal_code_changes {where}
@@ -286,7 +295,8 @@ def postal_code_detail(code: str):
     # All changes
     changes = conn.execute(
         """
-        SELECT change_type, source_type, snapshot_before, snapshot_after,
+        SELECT change_type, change_subtype, source_type,
+               snapshot_before, snapshot_after,
                old_value, new_value
         FROM postal_code_changes
         WHERE postal_code = ?
@@ -343,7 +353,8 @@ def fsa_detail(
 
     changes = conn.execute(
         """
-        SELECT postal_code, change_type, snapshot_before, snapshot_after,
+        SELECT postal_code, change_type, change_subtype,
+               snapshot_before, snapshot_after,
                old_value, new_value
         FROM postal_code_changes
         WHERE fsa = ? AND source_type = ?

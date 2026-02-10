@@ -5,6 +5,7 @@ import logging
 import pandas as pd
 
 from src import db
+from src.classifier import classify_city_change
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ def diff_snapshots(
     conn.close()
 
     empty = pd.DataFrame(columns=[
-        "postal_code", "change_type", "source_type",
+        "postal_code", "change_type", "change_subtype", "source_type",
         "snapshot_before", "snapshot_after",
         "old_value", "new_value", "province_abbr", "fsa",
     ])
@@ -106,14 +107,20 @@ def diff_snapshots(
         city_mask = b_city != a_city
         if city_mask.any():
             pcs = city_mask[city_mask].index
+            old_vals = b.loc[pcs, "city_name"].values
+            new_vals = a.loc[pcs, "city_name"].values
+            subtypes = [
+                classify_city_change(o, n) for o, n in zip(old_vals, new_vals)
+            ]
             city_df = pd.DataFrame({
                 "postal_code": pcs,
                 "change_type": "city_changed",
+                "change_subtype": subtypes,
                 "source_type": source_type,
                 "snapshot_before": date_before,
                 "snapshot_after": date_after,
-                "old_value": b.loc[pcs, "city_name"].values,
-                "new_value": a.loc[pcs, "city_name"].values,
+                "old_value": old_vals,
+                "new_value": new_vals,
                 "province_abbr": a.loc[pcs, "province_abbr"].values,
                 "fsa": pd.Series(pcs).str[:3].values,
             })
@@ -184,10 +191,13 @@ def store_changes(changes: pd.DataFrame) -> int:
 
     conn = db.get_connection()
     insert_cols = [
-        "postal_code", "change_type", "source_type",
+        "postal_code", "change_type", "change_subtype", "source_type",
         "snapshot_before", "snapshot_after",
         "old_value", "new_value", "province_abbr", "fsa",
     ]
+    # Ensure change_subtype column exists for non-city changes
+    if "change_subtype" not in changes.columns:
+        changes["change_subtype"] = None
     changes[insert_cols].to_sql(
         "postal_code_changes",
         conn,

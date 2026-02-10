@@ -22,6 +22,12 @@ function fmt(n) {
     return n != null ? Number(n).toLocaleString() : "—";
 }
 
+function subtypeGroup(subtype) {
+    // Returns 'technical' or 'real' for CSS class purposes
+    const technical = ["encoding", "accent_normalization", "punctuation", "spacing", "abbreviation"];
+    return technical.includes(subtype) ? "technical" : "real";
+}
+
 // ── Navigation ──────────────────────────────────────────────────────────────
 
 document.querySelectorAll(".nav-btn").forEach((btn) => {
@@ -102,10 +108,11 @@ function renderBarChart(containerId, data, colorMap = {}, defaultColor = "var(--
 
 const filterSearch = document.getElementById("filter-search");
 const filterType = document.getElementById("filter-type");
+const filterSubtype = document.getElementById("filter-subtype");
 const filterProvince = document.getElementById("filter-province");
 const filterSource = document.getElementById("filter-source");
 
-[filterType, filterProvince, filterSource].forEach((el) => {
+[filterType, filterSubtype, filterProvince, filterSource].forEach((el) => {
     el.addEventListener("change", () => { state.changelog.page = 1; loadChangelog(); });
 });
 
@@ -132,14 +139,21 @@ async function loadChangelog() {
     }
 
     try {
-        const data = await api("/changes", {
+        const subtypeVal = filterSubtype.value;
+        const apiParams = {
             page: state.changelog.page,
             per_page: state.changelog.perPage,
             change_type: filterType.value,
             province: filterProvince.value,
             source: filterSource.value,
             search: filterSearch.value,
-        });
+        };
+        if (subtypeVal === "substantive_only") {
+            apiParams.substantive_only = true;
+        } else if (subtypeVal) {
+            apiParams.change_subtype = subtypeVal;
+        }
+        const data = await api("/changes", apiParams);
 
         document.getElementById("changelog-info").textContent =
             `${fmt(data.total)} changes found — page ${data.page} of ${data.pages}`;
@@ -149,6 +163,7 @@ async function loadChangelog() {
             .map((c) => `<tr>
                 <td><a class="pc-link" data-code="${c.postal_code}">${formatPC(c.postal_code)}</a></td>
                 <td><span class="badge badge-${c.change_type}">${c.change_type}</span></td>
+                <td>${c.change_subtype ? `<span class="badge badge-sub-${subtypeGroup(c.change_subtype)}">${c.change_subtype}</span>` : ""}</td>
                 <td>${c.province_abbr || ""}</td>
                 <td>${c.fsa || ""}</td>
                 <td>${c.snapshot_before} &rarr; ${c.snapshot_after}</td>
@@ -417,10 +432,11 @@ function renderPCDetail(data) {
 
     if (data.changes.length) {
         html += `<h3>Changes</h3>
-        <table><thead><tr><th>Type</th><th>Period</th><th>Old</th><th>New</th></tr></thead><tbody>`;
+        <table><thead><tr><th>Type</th><th>Subtype</th><th>Period</th><th>Old</th><th>New</th></tr></thead><tbody>`;
         for (const c of data.changes) {
             html += `<tr>
                 <td><span class="badge badge-${c.change_type}">${c.change_type}</span></td>
+                <td>${c.change_subtype ? `<span class="badge badge-sub-${subtypeGroup(c.change_subtype)}">${c.change_subtype}</span>` : ""}</td>
                 <td>${c.snapshot_before} &rarr; ${c.snapshot_after}</td>
                 <td>${c.old_value || ""}</td><td>${c.new_value || ""}</td>
             </tr>`;
@@ -456,11 +472,12 @@ function renderFSADetail(data) {
 
     if (data.changes.length) {
         html += `<h3>Changes</h3>
-        <table><thead><tr><th>Code</th><th>Type</th><th>Period</th><th>Old</th><th>New</th></tr></thead><tbody>`;
+        <table><thead><tr><th>Code</th><th>Type</th><th>Subtype</th><th>Period</th><th>Old</th><th>New</th></tr></thead><tbody>`;
         for (const c of data.changes.slice(0, 100)) {
             html += `<tr>
                 <td><a class="pc-link" data-code="${c.postal_code}">${formatPC(c.postal_code)}</a></td>
                 <td><span class="badge badge-${c.change_type}">${c.change_type}</span></td>
+                <td>${c.change_subtype ? `<span class="badge badge-sub-${subtypeGroup(c.change_subtype)}">${c.change_subtype}</span>` : ""}</td>
                 <td>${c.snapshot_before} &rarr; ${c.snapshot_after}</td>
                 <td>${c.old_value || ""}</td><td>${c.new_value || ""}</td>
             </tr>`;

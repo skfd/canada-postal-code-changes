@@ -168,17 +168,19 @@ def _generate_removed(conn) -> None:
 
 
 def _generate_city_changed(conn) -> None:
-    """All city name changes."""
+    """All city name changes with subtype classification."""
     rows = conn.execute(
         "SELECT postal_code as pc, snapshot_after as date, "
-        "  province_abbr as prov, fsa, old_value as old_city, new_value as new_city "
+        "  province_abbr as prov, fsa, old_value as old_city, new_value as new_city, "
+        "  change_subtype as sub "
         "FROM postal_code_changes "
         "WHERE source_type = 'merged' AND change_type = 'city_changed' "
         "ORDER BY snapshot_after, postal_code"
     ).fetchall()
 
     data = [{"pc": r["pc"], "date": r["date"], "prov": r["prov"],
-             "fsa": r["fsa"], "old": r["old_city"] or "", "new": r["new_city"] or ""}
+             "fsa": r["fsa"], "old": r["old_city"] or "", "new": r["new_city"] or "",
+             "sub": r["sub"] or ""}
             for r in rows]
 
     _write_json("city_changed.json", data)
