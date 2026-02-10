@@ -17,7 +17,7 @@ from src import db
 
 logger = logging.getLogger(__name__)
 
-STATIC_DATA_DIR = Path("static-site/data")
+STATIC_DATA_DIR = Path("docs/data")
 
 
 def generate_all() -> None:

@@ -595,7 +595,7 @@ def generate_static() -> None:
     click.echo("Generating static site data ...")
     generate_all()
     duration = time.time() - start_time
-    click.echo(f"Static site data generated in {duration:.2f}s. Open static-site/index.html in a browser.")
+    click.echo(f"Static site data generated in {duration:.2f}s. Open docs/index.html in a browser.")
 
 
 if __name__ == "__main__":
