@@ -574,5 +574,20 @@ def export(fmt: str, output: str | None, source: str) -> None:
     click.echo(f"Exported {len(df)} changes to {output}. Total time: {total_duration:.2f}s.")
 
 
+# ── generate-static ───────────────────────────────────────────────────────────
+
+
+@cli.command("generate-static")
+def generate_static() -> None:
+    """Generate static site JSON data files from the database."""
+    from src.static_generator import generate_all
+
+    start_time = time.time()
+    click.echo("Generating static site data ...")
+    generate_all()
+    duration = time.time() - start_time
+    click.echo(f"Static site data generated in {duration:.2f}s. Open static-site/index.html in a browser.")
+
+
 if __name__ == "__main__":
     cli()

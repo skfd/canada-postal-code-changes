@@ -8,6 +8,9 @@ data/*.db
 data/processed/
 data/raw/
 
+# Generated static site data
+static-site/data/
+
 # Package metadata
 *.egg-info/
 
