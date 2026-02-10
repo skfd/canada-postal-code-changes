@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canadian Postal Code Change Tracker</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Canadian Postal Code Changes</h1>
+        <nav>
+            <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+            <button class="nav-btn" data-view="changelog">Change Log</button>
+            <button class="nav-btn" data-view="timeline">Timeline</button>
+            <button class="nav-btn" data-view="lookup">Lookup</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Dashboard View -->
+        <section id="view-dashboard" class="view active">
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-codes">—</div>
+                    <div class="stat-label">Total Postal Codes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-snapshots">—</div>
+                    <div class="stat-label">Snapshots</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-added">—</div>
+                    <div class="stat-label">Total Added</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-removed">—</div>
+                    <div class="stat-label">Total Removed</div>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div class="card">
+                    <h2>Changes by Type</h2>
+                    <div id="changes-by-type"></div>
+                </div>
+                <div class="card">
+                    <h2>Codes by Province</h2>
+                    <div id="codes-by-province"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Snapshots</h2>
+                <table id="snapshots-table">
+                    <thead>
+                        <tr><th>Source</th><th>Date</th><th>Postal Codes</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Change Log View -->
+        <section id="view-changelog" class="view">
+            <div class="filters">
+                <input type="text" id="filter-search" placeholder="Search postal code...">
+                <select id="filter-type">
+                    <option value="">All Types</option>
+                    <option value="added">Added</option>
+                    <option value="removed">Removed</option>
+                    <option value="city_changed">City Changed</option>
+                    <option value="csd_changed">CSD Changed</option>
+                    <option value="location_shifted">Location Shifted</option>
+                </select>
+                <select id="filter-province">
+                    <option value="">All Provinces</option>
+                </select>
+                <select id="filter-source">
+                    <option value="nar">NAR</option>
+                    <option value="geocoder">Geocoder.ca</option>
+                </select>
+                <button id="btn-export" class="btn-secondary">Export CSV</button>
+            </div>
+
+            <div id="changelog-info" class="info-bar"></div>
+
+            <table id="changelog-table">
+                <thead>
+                    <tr>
+                        <th>Postal Code</th>
+                        <th>Type</th>
+                        <th>Province</th>
+                        <th>FSA</th>
+                        <th>Period</th>
+                        <th>Old Value</th>
+                        <th>New Value</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <div class="pagination" id="pagination"></div>
+        </section>
+
+        <!-- Timeline View -->
+        <section id="view-timeline" class="view">
+            <div class="card">
+                <h2>Active Postal Codes Over Time</h2>
+                <canvas id="chart-active" height="300"></canvas>
+            </div>
+            <div class="card">
+                <h2>Additions &amp; Removals Per Period</h2>
+                <canvas id="chart-changes" height="300"></canvas>
+            </div>
+        </section>
+
+        <!-- Lookup View -->
+        <section id="view-lookup" class="view">
+            <div class="lookup-bar">
+                <input type="text" id="lookup-input" placeholder="Enter postal code (e.g. M5V1J2) or FSA (e.g. M5V)">
+                <button id="lookup-btn" class="btn-primary">Look Up</button>
+            </div>
+            <div id="lookup-result"></div>
+        </section>
+    </main>
+
+    <!-- Postal Code Detail Modal -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <button class="modal-close">&times;</button>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

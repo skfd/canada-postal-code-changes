@@ -1,0 +1,30 @@
+[project]
+name = "postal-codes"
+version = "0.1.0"
+description = "Canadian postal code change tracking and visualization"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2",
+    "pyarrow>=15.0",
+    "requests>=2.31",
+    "tqdm>=4.66",
+    "click>=8.1",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+postal-codes = "src.cli:cli"
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

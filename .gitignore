@@ -1,0 +1,5 @@
+# Exclude Windows reserved names
+nul
+con
+aux
+prn

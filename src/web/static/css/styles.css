@@ -1,0 +1,264 @@
+:root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242736;
+    --border: #2e3142;
+    --text: #e0e0e6;
+    --text-muted: #8b8fa3;
+    --accent: #6c8cff;
+    --accent-hover: #8ba4ff;
+    --green: #4caf50;
+    --red: #ef5350;
+    --orange: #ff9800;
+    --blue: #42a5f5;
+    --radius: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+}
+
+header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+nav { display: flex; gap: 4px; }
+
+.nav-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    padding: 6px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+}
+
+.nav-btn:hover { color: var(--text); background: var(--surface2); }
+.nav-btn.active { color: var(--accent); background: var(--surface2); border-color: var(--border); }
+
+main { max-width: 1200px; margin: 24px auto; padding: 0 24px; }
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+}
+
+.stat-value { font-size: 32px; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+/* Cards */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.card h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--text-muted); }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 500; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+tr:hover td { background: var(--surface2); }
+
+/* Filters */
+.filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.filters input, .filters select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    font-size: 13px;
+}
+
+.filters input { flex: 1; min-width: 200px; }
+.filters input:focus, .filters select:focus { outline: none; border-color: var(--accent); }
+
+.info-bar {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+/* Buttons */
+.btn-primary, .btn-secondary {
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+}
+
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--surface); color: var(--text); }
+.btn-secondary:hover { background: var(--surface2); }
+
+/* Pagination */
+.pagination {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.pagination button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.pagination button:hover { background: var(--surface2); }
+.pagination button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pagination button:disabled { opacity: 0.4; cursor: default; }
+
+/* Change type badges */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.badge-added { background: rgba(76, 175, 80, 0.15); color: var(--green); }
+.badge-removed { background: rgba(239, 83, 80, 0.15); color: var(--red); }
+.badge-city_changed { background: rgba(255, 152, 0, 0.15); color: var(--orange); }
+.badge-csd_changed { background: rgba(66, 165, 245, 0.15); color: var(--blue); }
+.badge-location_shifted { background: rgba(108, 140, 255, 0.15); color: var(--accent); }
+
+/* Lookup */
+.lookup-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.lookup-bar input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 15px;
+}
+
+.lookup-bar input:focus { outline: none; border-color: var(--accent); }
+
+/* Postal code links */
+.pc-link {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.pc-link:hover { text-decoration: underline; }
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 700px;
+    width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.modal-close:hover { color: var(--text); }
+
+.modal h2 { font-size: 18px; margin-bottom: 16px; }
+.modal h3 { font-size: 14px; color: var(--text-muted); margin: 16px 0 8px; }
+
+/* Bar charts (CSS-only) */
+.bar-list { list-style: none; }
+
+.bar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.bar-label { width: 120px; text-align: right; color: var(--text-muted); flex-shrink: 0; }
+.bar-fill { height: 20px; border-radius: 3px; min-width: 2px; transition: width 0.3s; }
+.bar-value { color: var(--text-muted); font-size: 12px; }
+
+/* Loading */
+.loading { color: var(--text-muted); text-align: center; padding: 40px; }
