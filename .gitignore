@@ -68,3 +68,6 @@ nul
 con
 aux
 prn
+
+# Processing progress (generated during runtime)
+PROCESSING_PROGRESS.md
