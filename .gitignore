@@ -70,3 +70,5 @@ prn
 
 # Processing progress (generated during runtime)
 PROCESSING_PROGRESS.md
+
+.tmp.driveupload
