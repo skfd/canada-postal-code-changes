@@ -8,7 +8,7 @@ This project tracks historical changes to Canadian postal codes (~893,000 unique
 - `data-spec.md` - Comprehensive documentation of Canadian postal code system and data sources
 - `pyproject.toml` - Project dependencies and configuration
 - `data/` - Raw and processed data (excluded from git due to size)
-- `postal_codes.db` - SQLite database (excluded from git due to size)
+- `data/postal_codes.db` - SQLite database (excluded from git due to size)
 
 ## What is Tracked in Git
 
@@ -35,7 +35,7 @@ This project tracks historical changes to Canadian postal codes (~893,000 unique
 ## Live Demo
 
 A static version of the change visualization is available at:
-**[GitHub Pages Demo](https://YOUR_USERNAME.github.io/postal-codes/)** *(update this URL after deployment)*
+**[GitHub Pages Demo](https://skfd.github.io/canada-postal-code-changes/)**
 
 ## Setup Instructions
 
@@ -43,19 +43,19 @@ A static version of the change visualization is available at:
 
 ```bash
 # Generate static site data
-python -m src.cli generate-static
+postal-codes generate-static
 
-# Open static-site/index.html in your browser
+# Open docs/index.html in your browser
 ```
 
 ### Full Development Setup
 
 1. Clone the repository
 2. Install dependencies: `pip install -e .`
-3. Download data: `python -m src.cli download`
-4. Process data: `python -m src.cli process`
-5. Run change detection: `python -m src.cli diff`
-6. Start dynamic web interface: `python -m src.cli serve`
+3. Download data: `postal-codes download`
+4. Process data: `postal-codes process`
+5. Run change detection: `postal-codes diff`
+6. Start dynamic web interface: `postal-codes serve`
 
 ## Data Pipeline
 
