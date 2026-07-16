@@ -1,0 +1,10 @@
+{
+  "narrative": [
+    "A small, steady release: <b>+1,864</b> net (2,700 added, 836 removed), with additions led by Quebec (1,641). Encoding noise has all but vanished (22 changes), suggesting the feed stabilised after the 2024 cleanup.",
+    "The 300 real renames are almost entirely an <b>Alberta county story</b> — Calgary and Cochrane to Rocky View County, Drayton Valley to Brazeau County, Spruce Grove to Parkland County. Fast-growing Prairie towns and their surrounding rural municipalities continually trading edge addresses.",
+    "CSD reassignments are modest (1,469) and more evenly spread across Ontario, Alberta and BC, consistent with routine maintenance rather than a reform event."
+  ],
+  "reasoning": {
+    "substantive": ["The Alberta town-versus-county churn (Calgary/Cochrane ↔ Rocky View, Spruce Grove ↔ Parkland) recurs every Prairie release. It reflects real growth at the urban fringe — annexations and de-annexations between municipalities and their surrounding counties as new subdivisions are built out."]
+  }
+}

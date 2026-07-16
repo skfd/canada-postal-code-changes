@@ -1,0 +1,11 @@
+{
+  "narrative": [
+    "The quietest release in the series by volume — just 711 additions and 485 removals for a net of <b>+226</b> — yet it carries more real renames (842) than technical noise (99), a rare clean signal.",
+    "One change dominates: <b>Duncan → North Cowichan</b> (588 codes, BC). Like the Victoria/Langford flip, it's the Cowichan Valley boundary being reclassified — here in the opposite direction to Feb 2026's North Cowichan → Duncan, underscoring how unsettled these Vancouver Island designations are.",
+    "The rest is Prairie county housekeeping — Medicine Hat/Cypress County, Red Deer/Red Deer County, Beaumont/Leduc County — small reassignments between towns and their surrounding municipal districts.",
+    "With additions, removals and noise all low, this is the release to study genuine boundary behaviour in isolation, free of the bulk loads and encoding waves that dominate the noisier cycles."
+  ],
+  "reasoning": {
+    "boundary": ["Duncan → North Cowichan (588) reverses in Feb 2026. A boundary that flips direction between releases signals the source oscillating between two valid municipal designations for the same Cowichan Valley codes, not a real annexation each time."]
+  }
+}

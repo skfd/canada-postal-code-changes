@@ -1,0 +1,10 @@
+{
+  "narrative": [
+    "An interim top-up and the calm after February's surge: 409 codes added, 43 removed (<b>+366</b> net), and effectively <b>no city changes at all</b> (9 real, 0 encoding).",
+    "The only ongoing activity is municipality recoding — 6,080 CSD reassignments, led by New Brunswick (1,819), Ontario (1,294) and Quebec (837) — the tail of the administrative realignment that has run through the whole series.",
+    "The handful of real renames are scattered one-offs (Sunnyside → Springfield in Manitoba; Airdrie ↔ Rocky View County in Alberta) with no pattern. This is a maintenance release."
+  ],
+  "reasoning": {
+    "csd_changed": ["With almost no additions or renames, the 6,080 CSD reassignments are the only substantive activity — the continuing drip of municipal-identifier updates in New Brunswick, Ontario and Quebec that follows each governance change."]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "narrative": [
+    "The first delta in the series sets the baseline: the active count rose from 823,658 to <b>837,789</b>, a net of +14,131. That modest number hides a lot of churn — 26,768 codes added against 12,637 removed, the <b>highest removal count of any release</b> as Statistics Canada pruned a backlog of retired codes.",
+    "Growth was led by <b>Alberta</b>, which added 9,048 codes — more than Ontario's 6,364 despite a third of the population, the fingerprint of the province's post-2021 population and construction boom. Removals, by contrast, were an Ontario/Quebec story (4,838 and 3,984).",
+    "The real place-name changes are few (1,313) but include the dataset's most famous rename: <b>Asbestos, Quebec → Val-des-Sources</b> (502 codes, plus 75 to neighbouring Danville) — the town's 2020 vote to shed the mineral's name finally reaching the address file. In Ontario, 570 codes shifted from <b>Windsor to Tecumseh</b> as the suburb's boundary was recognised.",
+    "Encoding noise is essentially absent this cycle (359) — the great mojibake wave doesn't arrive until mid-2024. What is already stirring is municipality recoding: 9,197 CSD reassignments, concentrated in Ontario (4,503) and New Brunswick (2,175)."
+  ],
+  "reasoning": {
+    "added": ["Alberta out-adding Ontario in absolute terms is the standout. It matches the province's 2022–23 in-migration and housing surge — new subdivisions in the Calgary–Edmonton corridor generating fresh delivery codes faster than anywhere else."],
+    "removed": ["The highest removals in the series. This early release looks like a clean-up pass — Statistics Canada retiring codes that had lingered in the file, concentrated in the two largest, longest-established provinces."],
+    "substantive": ["Asbestos → Val-des-Sources is a genuine civic renaming (a 2020 referendum), not a boundary or encoding artefact — the clearest case in the whole dataset of a real place deliberately changing its name."]
+  }
+}

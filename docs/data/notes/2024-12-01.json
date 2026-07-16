@@ -1,0 +1,12 @@
+{
+  "narrative": [
+    "The only net contraction in the series: active codes fell by <b>1,970</b> (853,835 → 851,865) as removals (5,620) outran additions (3,650) for the only time across six snapshots.",
+    "Removals were broad — Ontario (1,792), Quebec (1,030), Alberta (980) and New Brunswick (846) — the look of a consolidation pass retiring low-volume or duplicate rural routes rather than any single event.",
+    "The cycle's standout is New Brunswick: <b>15,640 of the 17,185 CSD reassignments</b> are there. This is the postal-code footprint of New Brunswick's 2023 local-governance reform, which merged some 340 local entities into 90 — the municipality field catching up to the province's redrawn map.",
+    "Real city renames are few (359) and rural-Alberta flavoured — codes shuffling between Spruce Grove and Parkland County, Drayton Valley and Brazeau County — the ongoing town-versus-county boundary churn that recurs in every Prairie release."
+  ],
+  "reasoning": {
+    "removed": ["The sole net contraction. Spread evenly across the big provinces with no dominant region, it reads as routine retirement of stale routes rather than a structural change."],
+    "csd_changed": ["New Brunswick's 15,640 reassignments map onto its 2023 local-governance reform (roughly 340 entities merged into 90). The physical addresses didn't move; their municipal identifiers were rewritten to the new structure."]
+  }
+}

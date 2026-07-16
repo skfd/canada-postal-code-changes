@@ -1,0 +1,13 @@
+{
+  "narrative": [
+    "This release carries the dataset's two largest technical events at once. Active codes rose +16,046 (to 853,835), but alongside the additions sit <b>75,232 encoding repairs</b> and a staggering <b>94,747 municipality (CSD) reassignments</b> — the bulk of all such changes in the entire series.",
+    "The encoding wave is the mojibake cleanup: accented French names stored as garbled bytes were normalised. <b>Montréal</b> (19,808), <b>Québec</b> (18,772), Trois-Rivières (5,857) and Lévis (5,395) alone account for over 49,000. No place was renamed; the feed's character encoding was repaired.",
+    "The CSD reassignments run in parallel and land in the same provinces: <b>Quebec (78,406) and New Brunswick (14,739)</b>. This is a wholesale recode of the municipality field, not physical boundary change — postal codes re-aligned to updated Census Subdivision identifiers across francophone Canada.",
+    "Genuine city renames stay modest (1,163). The largest, <b>Victoria → Langford</b> (797, BC), is the mirror image of Feb 2026's Langford → Victoria — the same Greater Victoria boundary reclassified back and forth between releases, a sign the underlying designation is unsettled."
+  ],
+  "reasoning": {
+    "csd_changed": ["94,747 reassignments — about 72% of every CSD change in the series — concentrated in Quebec and New Brunswick. This is an administrative recode: postal codes remapped to revised Census Subdivision identifiers en masse, riding along with the same francophone-name cleanup that drove the encoding fixes."],
+    "encoding": ["The single largest mojibake repair in the dataset. Because the biggest cities carry the most codes, Montréal, Québec, Trois-Rivières and Lévis alone are ~49,000 of the 75,232 — a pure encoding artefact, quarantined from every real total."],
+    "boundary": ["Victoria → Langford (797) reverses in a later release (Langford → Victoria). When the same metro boundary flips direction between snapshots, it usually means the source is toggling between two valid designations rather than a real annexation each cycle."]
+  }
+}
