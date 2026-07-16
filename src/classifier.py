@@ -122,6 +122,8 @@ def classify_city_change(old_value: str | None, new_value: str | None) -> str:
         One of: encoding, accent_normalization, punctuation, spacing,
         abbreviation, boundary, rename, substantive.
     """
+    if not isinstance(old_value, str) or not isinstance(new_value, str):
+        return "substantive"
     if not old_value or not new_value:
         return "substantive"
 

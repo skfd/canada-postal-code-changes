@@ -45,10 +45,14 @@ NAR_SNAPSHOTS: dict[str, dict] = {
         "url": "https://www150.statcan.gc.ca/n1/pub/46-26-0002/2022001/202512.zip",
         "reference_date": "2025-12-01",
     },
+    "2026-06": {
+        "url": "https://www150.statcan.gc.ca/n1/pub/46-26-0002/2022001/202606.zip",
+        "reference_date": "2026-06-01",
+    },
 }
 
 # Ordered list of snapshot periods for diffing consecutive pairs
-NAR_SNAPSHOT_ORDER = ["2022", "2023", "2024-06", "2024-12", "2025-07", "2025-12"]
+NAR_SNAPSHOT_ORDER = ["2022", "2023", "2024-06", "2024-12", "2025-07", "2025-12", "2026-06"]
 
 # ── Geocoder.ca ──────────────────────────────────────────────────────────────
 
