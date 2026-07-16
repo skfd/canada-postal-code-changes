@@ -11,7 +11,6 @@ Data sources used by this software have their own licenses:
 
 import json
 import logging
-import random
 from pathlib import Path
 
 from src import db
@@ -323,31 +322,6 @@ def _added_fsa(conn, after: str) -> list[list]:
     return [[r["fsa"], r["p"], r["n"]] for r in rows]
 
 
-def _added_points(conn, after: str) -> list[list]:
-    """Sampled 2026 coordinates of added codes (empty when the snapshot has no coords)."""
-    provs = [r[0] for r in conn.execute(
-        "SELECT DISTINCT province_abbr FROM postal_code_snapshots "
-        "WHERE source_type = 'merged' AND snapshot_date = ? AND province_abbr != ''",
-        (after,),
-    ).fetchall()]
-    rng = random.Random(1)
-    pts = []
-    for pr in provs:
-        rows = conn.execute(
-            "SELECT s.latitude AS lat, s.longitude AS lon FROM postal_code_changes ch "
-            "JOIN postal_code_snapshots s ON s.postal_code = ch.postal_code "
-            "  AND s.snapshot_date = ch.snapshot_after AND s.source_type = 'merged' "
-            "WHERE ch.source_type = 'merged' AND ch.snapshot_after = ? AND ch.change_type = 'added' "
-            "  AND s.latitude IS NOT NULL AND s.latitude != 0 AND ch.province_abbr = ? LIMIT 400",
-            (after, pr),
-        ).fetchall()
-        coords = [[round(x["lon"], 3), round(x["lat"], 3)] for x in rows]
-        if len(coords) > 30:
-            coords = rng.sample(coords, 30)
-        pts.extend(coords)
-    return pts
-
-
 def _generate_snapshot_details(conn, snapshots: list[dict]) -> None:
     """Write one deep-dive JSON per transition to docs/data/snapshot/<date>.json."""
     for s in snapshots:
@@ -376,6 +350,27 @@ def _generate_snapshot_details(conn, snapshots: list[dict]) -> None:
             "GROUP BY fsa ORDER BY n DESC LIMIT 12",
             (after,),
         ).fetchall()
+
+        fsa_rows = conn.execute(
+            f"""
+            SELECT fsa,
+              SUM(change_type = 'added') AS added,
+              SUM(change_type = 'removed') AS removed,
+              SUM(change_type = 'csd_changed') AS csd,
+              SUM(change_type = 'city_changed' AND {_REAL_SQL}) AS creal,
+              SUM(change_type = 'city_changed' AND NOT {_REAL_SQL}) AS cnoise
+            FROM postal_code_changes
+            WHERE source_type = 'merged' AND snapshot_after = ? AND fsa != ''
+            GROUP BY fsa
+            """,
+            (after,),
+        ).fetchall()
+        fsa_counts = {}
+        for r in fsa_rows:
+            a, rm = r["added"] or 0, r["removed"] or 0
+            cs, cr, cn = r["csd"] or 0, r["creal"] or 0, r["cnoise"] or 0
+            fsa_counts[r["fsa"]] = {"added": a, "removed": rm, "csd": cs, "creal": cr,
+                                    "cnoise": cn, "total": a + rm + cs + cr + cn}
 
         groups = [
             {"key": "added", "name": "Additions", "count": s["added"],
@@ -423,8 +418,8 @@ def _generate_snapshot_details(conn, snapshots: list[dict]) -> None:
                 for r in provinces
             ],
             "top_fsa": [{"fsa": r["fsa"], "p": r["p"], "n": r["n"]} for r in top_fsa],
+            "fsa": fsa_counts,
             "groups": groups,
-            "points": _added_points(conn, after),
         }
         _write_json(f"snapshot/{after}.json", detail)
 

@@ -332,16 +332,26 @@ document.querySelectorAll('.tab').forEach(btn=>{
 });
 
 async function boot(){
-  const [summary,snapshots,byProvince,byFsa,fsaGeo,findings]=await Promise.all([
+  const [summary,snapshots,byProvince,findings]=await Promise.all([
     fetch('data/summary.json').then(r=>r.json()),
     fetch('data/snapshots.json').then(r=>r.json()),
     fetch('data/by_province.json').then(r=>r.json()),
-    fetch('data/by_fsa.json').then(r=>r.json()),
-    fetch('data/fsa.geojson').then(r=>r.json()),
     fetch('data/findings.json').then(r=>r.json()).catch(()=>null),
   ]);
-  Object.assign(state,{summary,snapshots,byProvince,byFsa,fsaGeo,findings});
-  renderHero();renderFindings();renderLine();renderBars();buildPaths(fsaGeo);renderMap('total');renderIndepth();renderSnapshots();
+  Object.assign(state,{summary,snapshots,byProvince,findings});
+  renderHero();renderFindings();renderLine();renderBars();renderIndepth();renderSnapshots();
+  loadMap();
+}
+
+/* The geojson is heavy (~1.2 MB), so the map loads after the page paints. */
+async function loadMap(){
+  $('#mapCaption').textContent='Loading map…';
+  const [byFsa,fsaGeo]=await Promise.all([
+    fetch('data/by_fsa.json').then(r=>r.json()),
+    fetch('data/fsa.geojson').then(r=>r.json()),
+  ]);
+  Object.assign(state,{byFsa,fsaGeo});
+  buildPaths(fsaGeo);renderMap(state.curMetric);
 }
 
 function renderHero(){
@@ -443,6 +453,7 @@ function buildPaths(geo){
 
 function renderMap(metric){
   state.curMetric=metric;const meta=METRIC_META[metric],bf=state.byFsa;
+  if(!bf)return; // toggle clicked before the map data arrived — curMetric is kept
   const max=Math.max(...Object.values(bf).map(c=>c[metric]||0),1),lmax=Math.log(max+1);
   const grey=cssv('--surface3'),svg=$('#map');svg.innerHTML='';
   const frag=document.createDocumentFragment();
