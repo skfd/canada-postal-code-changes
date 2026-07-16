@@ -50,6 +50,7 @@ def generate_all() -> None:
     _generate_summary(conn)
     _generate_snapshots(conn, snapshots)
     _generate_by_province(conn)
+    _generate_by_fsa(conn)
     _generate_added(conn)
     _generate_removed(conn)
     _generate_city_changed(conn)
@@ -203,6 +204,31 @@ def _generate_by_province(conn) -> None:
             "city_noise": r["city_noise"] or 0,
         }
     _write_json("by_province.json", provinces)
+
+
+def _generate_by_fsa(conn) -> None:
+    """Per-FSA change counts for the choropleth, split real vs noise."""
+    rows = conn.execute(
+        f"""
+        SELECT fsa,
+          SUM(change_type = 'added') AS added,
+          SUM(change_type = 'removed') AS removed,
+          SUM(change_type = 'csd_changed') AS csd,
+          SUM(change_type = 'city_changed' AND {_REAL_SQL}) AS creal,
+          SUM(change_type = 'city_changed' AND NOT {_REAL_SQL}) AS cnoise
+        FROM postal_code_changes
+        WHERE source_type = 'merged' AND fsa != ''
+        GROUP BY fsa
+        """
+    ).fetchall()
+
+    out = {}
+    for r in rows:
+        a, rm = r["added"] or 0, r["removed"] or 0
+        cs, cr, cn = r["csd"] or 0, r["creal"] or 0, r["cnoise"] or 0
+        out[r["fsa"]] = {"added": a, "removed": rm, "csd": cs, "creal": cr,
+                         "cnoise": cn, "total": a + rm + cs + cr + cn}
+    _write_json("by_fsa.json", out)
 
 
 def _generate_added(conn) -> None:
