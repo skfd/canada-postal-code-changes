@@ -1,1 +1,1 @@
-{"total_codes":907033,"active_codes":906748,"snapshots":8,"added":103632,"removed":20542,"city_changed":163167,"total_changes":287341}
+{"total_codes":907033,"active_codes":906748,"snapshots":8,"first_active":823658,"last_active":906748,"net_growth":83090,"added":103632,"removed":20542,"csd_changed":132318,"city_total":163167,"city_real":12074,"city_noise":151093,"city_subtypes":{"encoding":150366,"boundary":8812,"substantive":2760,"abbreviation":618,"rename":502,"accent_normalization":54,"punctuation":42,"spacing":13}}

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snapshot — Canadian Postal Code Changes</title>
+<script data-goatcounter="https://post-codes.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+<style>
+:root{
+  --bg:#0f1117;--surface:#161925;--surface2:#1e2230;--surface3:#262b3b;
+  --border:#2b3040;--border2:#363c4f;--ink:#e7e9f0;--dim:#9aa0b6;--faint:#6a7089;
+  --accent:#7d95ff;--accent-soft:rgba(125,149,255,.14);
+  --green:#42d392;--red:#f6707a;--amber:#f5b73d;--noise:#767c94;--violet:#b083f0;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.5);
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:light){:root{
+  --bg:#f4f6fa;--surface:#fff;--surface2:#f7f9fc;--surface3:#eef1f7;
+  --border:#e2e6ef;--border2:#d3d9e6;--ink:#1a1f2e;--dim:#5b6379;--faint:#8b93a8;
+  --accent:#4f68e6;--accent-soft:rgba(79,104,230,.10);
+  --green:#12a866;--red:#e0424f;--amber:#c9860a;--noise:#8b92a6;--violet:#8a5cf0;
+  --shadow:0 1px 2px rgba(20,30,60,.06),0 10px 30px -18px rgba(20,30,60,.25);}}
+:root[data-theme="dark"]{
+  --bg:#0f1117;--surface:#161925;--surface2:#1e2230;--surface3:#262b3b;
+  --border:#2b3040;--border2:#363c4f;--ink:#e7e9f0;--dim:#9aa0b6;--faint:#6a7089;
+  --accent:#7d95ff;--accent-soft:rgba(125,149,255,.14);
+  --green:#42d392;--red:#f6707a;--amber:#f5b73d;--noise:#767c94;--violet:#b083f0;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.5);}
+:root[data-theme="light"]{
+  --bg:#f4f6fa;--surface:#fff;--surface2:#f7f9fc;--surface3:#eef1f7;
+  --border:#e2e6ef;--border2:#d3d9e6;--ink:#1a1f2e;--dim:#5b6379;--faint:#8b93a8;
+  --accent:#4f68e6;--accent-soft:rgba(79,104,230,.10);
+  --green:#12a866;--red:#e0424f;--amber:#c9860a;--noise:#8b92a6;--violet:#8a5cf0;
+  --shadow:0 1px 2px rgba(20,30,60,.06),0 10px 30px -18px rgba(20,30,60,.25);}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:22px 22px 80px}
+h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:-.01em;text-wrap:balance}
+a{color:var(--accent);text-decoration:none}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:3px;flex:none;display:inline-block}
+
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.crumb{font-size:.85rem;color:var(--dim)}.crumb a{color:var(--dim)}.crumb b{color:var(--ink)}
+.theme-btn{background:var(--surface2);border:1px solid var(--border);color:var(--dim);width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:1rem}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:650}
+.h-title{font-size:1.9rem;margin:6px 0 6px}
+.h-sub{color:var(--dim);font-size:1.02rem;max-width:64ch}
+.snapnav{display:flex;gap:8px;margin-top:16px;font-size:.82rem}
+.snapnav a{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--dim)}
+.snapnav a.dis{opacity:.4;pointer-events:none}
+.snapnav a.cur{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
+.mstrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:26px 0}
+.mcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px 16px;box-shadow:var(--shadow)}
+.mcard .l{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);font-weight:600}
+.mcard .v{font-size:1.5rem;font-weight:700;margin-top:3px;line-height:1}
+.mcard .v.green{color:var(--green)}.mcard .v.red{color:var(--red)}.mcard .v.amber{color:var(--amber)}.mcard .v.accent{color:var(--accent)}.mcard .v.violet{color:var(--violet)}
+.mcard .n{font-size:.72rem;color:var(--faint);margin-top:5px}
+
+.narr{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 26px;box-shadow:var(--shadow)}
+.narr h2{font-size:1.15rem;margin-bottom:12px}
+.narr p{margin:0 0 13px;color:var(--ink);font-size:.98rem;line-height:1.68}
+.narr p:last-child{margin-bottom:0}.narr .lead{font-size:1.05rem}
+.narr b{font-weight:650}.narr .k{color:var(--amber);font-weight:600}
+
+.section{margin-top:34px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.sec-head h2{font-size:1.18rem}.sec-head .hint{font-size:.82rem;color:var(--faint)}
+
+.group{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+.g-top{display:flex;align-items:center;gap:14px;padding:18px 20px;cursor:pointer}
+.g-top:hover{background:var(--surface2)}
+.g-icon{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;flex:none;font-size:1.1rem}
+.g-meta{flex:1;min-width:0}.g-name{font-size:1.05rem;font-weight:650}.g-share{font-size:.83rem;color:var(--dim);margin-top:2px}
+.g-count{font-family:var(--mono);font-size:1.4rem;font-weight:700}
+.g-chev{color:var(--faint);transition:transform .2s}
+.group.open .g-chev{transform:rotate(90deg)}
+.g-body{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
+.group.open .g-body{display:block}
+.g-body h4{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin:18px 0 10px}
+.subbar{display:flex;flex-direction:column;gap:8px}
+.sb-row{display:grid;grid-template-columns:64px 1fr 70px;gap:10px;align-items:center;font-size:.85rem}
+.sb-track{display:block;height:12px;background:var(--surface3);border-radius:6px;overflow:hidden}
+.sb-fill{display:block;height:100%;border-radius:6px;min-width:2px}
+.sb-val{text-align:right;font-family:var(--mono);color:var(--dim)}
+.sb-name{color:var(--ink)}
+.fsachips{display:flex;flex-wrap:wrap;gap:6px}
+.fsachip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:.78rem;font-family:var(--mono);color:var(--dim)}
+.fsachip b{color:var(--ink)}
+.reason{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--violet);border-radius:10px;padding:14px 16px;margin-top:6px}
+.reason .tag{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--violet);font-weight:700;display:inline-flex;align-items:center;gap:6px;margin-bottom:7px}
+.reason p{margin:0 0 8px;font-size:.9rem;color:var(--ink);line-height:1.6}.reason p:last-child{margin:0}
+.exlist{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.exrow{display:flex;align-items:center;gap:12px;background:var(--surface);padding:9px 13px;font-size:.86rem}
+.exrow .pc{font-family:var(--mono);color:var(--accent);font-weight:600;flex:none;width:64px}
+.exrow .fromto{flex:1;min-width:0}.exrow .fromto .o{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--faint)}
+.exrow .fromto .arw{color:var(--faint);margin:0 6px}.exrow .fromto .nv{color:var(--ink);font-weight:600}
+.exrow .cnt{color:var(--faint);font-family:var(--mono);font-size:.78rem;flex:none}
+
+.geowrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.geowrap .cap{font-size:.82rem;color:var(--faint);margin-bottom:6px}
+svg.map{width:100%;height:auto;display:block;background:var(--surface2);border-radius:10px}
+.geonote{font-size:.8rem;color:var(--faint);margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+.geonote b{color:var(--dim)}
+
+.exp-tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.exp-tools input{flex:1;min-width:180px;padding:9px 13px;background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--ink);font:inherit;font-size:.88rem}
+.exp-tools input:focus{outline:none;border-color:var(--accent)}
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:none;background:none;color:var(--dim);font:inherit;font-size:.8rem;padding:6px 12px;border-radius:6px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff;font-weight:600}
+.etable{width:100%;border-collapse:collapse;font-size:.86rem}
+.etable thead th{text-align:left;padding:9px 12px;color:var(--dim);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+.etable tbody td{padding:9px 12px;border-bottom:1px solid var(--border)}
+.etable tbody tr{cursor:pointer}.etable tbody tr:hover{background:var(--surface2)}
+.chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:600}
+.chip.boundary{background:rgba(245,183,61,.16);color:var(--amber)}
+.chip.substantive{background:rgba(66,211,146,.16);color:var(--green)}
+.chip.encoding{background:rgba(118,124,148,.2);color:var(--noise)}
+.etable .pc{font-family:var(--mono);color:var(--accent);font-weight:600}
+
+.drawer{position:fixed;top:0;right:0;height:100%;width:380px;max-width:92vw;background:var(--surface);border-left:1px solid var(--border2);box-shadow:-12px 0 40px -12px rgba(0,0,0,.5);transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);z-index:60;padding:24px;overflow-y:auto}
+.drawer.open{transform:translateX(0)}
+.drawer .close{position:absolute;top:16px;right:16px;background:var(--surface2);border:1px solid var(--border);color:var(--dim);width:30px;height:30px;border-radius:8px;cursor:pointer}
+.drawer .dpc{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent);letter-spacing:.05em}
+.drawer .drow{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+.drawer .drow .dk{color:var(--dim)}.drawer .drow .dv{color:var(--ink);font-weight:600;text-align:right}
+.drawer .dreason{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--violet);border-radius:9px;padding:12px 14px;margin-top:16px;font-size:.85rem;color:var(--ink)}
+.drawer .dreason .tag{font-size:.64rem;text-transform:uppercase;letter-spacing:.08em;color:var(--violet);font-weight:700;margin-bottom:6px}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .25s;z-index:55}
+.scrim.on{opacity:1;pointer-events:auto}
+
+#tt{position:fixed;pointer-events:none;background:var(--surface3);border:1px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:.78rem;color:var(--ink);box-shadow:var(--shadow);opacity:0;transition:opacity .1s;z-index:70;font-family:var(--mono)}
+.foot{margin-top:44px;padding-top:18px;border-top:1px solid var(--border);font-size:.8rem;color:var(--faint);text-align:center}
+.badge{display:inline-block;background:var(--surface2);border:1px solid var(--border);color:var(--dim);font-size:.68rem;padding:2px 8px;border-radius:20px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;vertical-align:middle}
+.loading{text-align:center;padding:60px 20px;color:var(--faint)}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <div class="loading" id="loading">Loading snapshot…</div>
+</div>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer"></aside>
+<div id="tt"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const fmt=n=>(n||0).toLocaleString('en-CA');
+const cssv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const NS='http://www.w3.org/2000/svg';
+const mk=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+const params=new URLSearchParams(location.search);
+const DATE=params.get('date');
+
+const GICON={added:['＋','var(--green)'],boundary:['⇄','var(--amber)'],substantive:['✎','var(--green)'],
+  csd_changed:['⌂','var(--violet)'],encoding:['⚠','var(--noise)'],removed:['－','var(--red)']};
+const GEN_REASON={
+  added:['A block of brand-new delivery points. Large, removal-free jumps usually mean a bulk feed re-sync rather than organic growth; steady low numbers mean routine infill.'],
+  boundary:['A postal code’s municipal label changed while the location did not — the signature of municipal-boundary realignment (amalgamation, annexation, or a split back into historical community names).'],
+  substantive:['Genuine name changes not explained by a boundary shift or an encoding fix — usually Canada Post standardising long-used informal or ambiguous names. The group most worth a manual spot-check.'],
+  csd_changed:['The postal code was reassigned to a different Census Subdivision (municipality) — a boundary/annexation signal even when the printed city name stays the same.'],
+  encoding:['Not real changes. Mis-encoded accented names (mojibake) were repaired to a clean form. These are quarantined from every real-change total.'],
+  removed:['Codes retired from the delivery file. A net contraction is rare and worth a closer look; zero removals alongside big additions signals an additive bulk load.']};
+const CATNAME={boundary:'Boundary',substantive:'Rename',encoding:'Encoding'};
+const CATREASON={
+  boundary:'Municipal label changed but the location did not — a boundary/annexation reassignment. The place was folded into (or split from) a neighbouring municipality.',
+  substantive:'A genuine name change not explained by a boundary shift or encoding fix. Likely a delivery-area split, consolidation, or name standardisation.',
+  encoding:'Not a real change. A mis-encoded accented name (mojibake) was repaired to a clean form. Excluded from real-change totals.'};
+
+let DETAIL=null,NOTES=null;
+
+$('#drawer');
+async function boot(){
+  if(!DATE){$('#loading').textContent='No snapshot specified.';return;}
+  let detail;
+  try{detail=await fetch('data/snapshot/'+DATE+'.json').then(r=>{if(!r.ok)throw 0;return r.json();});}
+  catch(e){$('#loading').innerHTML='Snapshot not found. <a href="index.html">← Back to overview</a>';return;}
+  DETAIL=detail;
+  NOTES=await fetch('data/notes/'+DATE+'.json').then(r=>r.ok?r.json():null).catch(()=>null);
+  const snaps=await fetch('data/snapshots.json').then(r=>r.json()).catch(()=>[]);
+  render(snaps);
+}
+
+function render(snaps){
+  const d=DETAIL,m=d.metrics;
+  const trans=snaps.filter(s=>!s.baseline);
+  const idx=trans.findIndex(s=>s.date===DATE);
+  const prev=idx>0?trans[idx-1]:null, next=idx>=0&&idx<trans.length-1?trans[idx+1]:null;
+  const net=d.active_after-d.active_before, up=net>=0;
+
+  const cards=[
+    ['Net change',(up?'+':'−')+fmt(Math.abs(net)),'accent',fmt(d.active_before)+' → '+fmt(d.active_after)],
+    ['Added',fmt(m.added),'green','brand-new codes'],
+    ['Removed',fmt(m.removed),'red',m.removed?'retired':'none retired'],
+    ['Real renames',fmt(m.city_real),'amber','of '+fmt(m.city_real+m.city_noise)+' raw'],
+  ];
+  if(m.csd_changed)cards.push(['Municipality moves',fmt(m.csd_changed),'violet','CSD reassignments']);
+  cards.push(['Encoding noise',fmt(m.city_noise),'','filtered out']);
+
+  const narr=(NOTES&&NOTES.narrative&&NOTES.narrative.length)?NOTES.narrative
+    :[`This release moved the active count from <b>${fmt(d.active_before)}</b> to <b>${fmt(d.active_after)}</b>
+       — a net of <b>${(up?'+':'−')+fmt(Math.abs(net))}</b>. It added ${fmt(m.added)} codes and removed ${fmt(m.removed)},
+       with <b class="k">${fmt(m.city_real)} genuine city changes</b> against ${fmt(m.city_noise)} encoding fixes that we
+       set aside as noise.`,
+      `<span style="color:var(--faint)">No curated write-up has been mined for this snapshot yet — the figures and
+       groups below are generated directly from the data.</span>`];
+
+  const groups=d.groups.map(g=>groupHTML(g)).join('');
+
+  $('#wrap').innerHTML=`
+    <div class="bar">
+      <div class="crumb"><a href="index.html">← Overview</a> &nbsp;/&nbsp; <b>Snapshot: ${d.label}</b></div>
+      <button class="theme-btn" id="themeBtn" title="Toggle theme">◐</button>
+    </div>
+    <div class="eyebrow">Snapshot ${idx+1} of ${trans.length} · ${d.range}</div>
+    <h1 class="h-title">The ${d.label} release</h1>
+    <p class="h-sub">${d.range} · additions, removals and genuine renames, with encoding noise separated out.</p>
+    <div class="snapnav">
+      <a href="${prev?'snapshot.html?date='+prev.date:'#'}" class="${prev?'':'dis'}">‹ ${prev?prev.label:'—'}</a>
+      <a href="#" class="cur">${d.label}</a>
+      <a href="${next?'snapshot.html?date='+next.date:'#'}" class="${next?'':'dis'}">${next?next.label:'—'} ›</a>
+    </div>
+    <div class="mstrip">${cards.map(c=>`<div class="mcard"><div class="l">${c[0]}</div><div class="v ${c[2]}">${c[1]}</div><div class="n">${c[3]}</div></div>`).join('')}</div>
+    <div class="narr"><h2>What happened in this release</h2>${narr.map((p,i)=>`<p class="${i===0?'lead':''}">${p}</p>`).join('')}</div>
+    <div class="section"><div class="sec-head"><h2>Change groups</h2><span class="hint">expand any group for its breakdown, reasoning &amp; examples</span></div>${groups}</div>
+    <div class="section"><div class="sec-head"><h2>Where the new codes landed</h2><span class="hint">${d.points.length?'real 2026 coordinates · sampled':'no coordinates for this snapshot'}</span></div>
+      <div class="geowrap"><div class="cap">Each dot is a postal code added in this release (${fmt(d.points.length)}-point sample of ${fmt(m.added)}). Hover for coordinates.</div>
+      <svg class="map" id="map" viewBox="0 0 900 460" role="img" aria-label="Scatter of new postal codes"></svg>
+      <div class="geonote"><b>Note:</b> NAR carries no coordinates before 2026, so historical <i>movement</i> can't be shown;
+      these are current (2026) positions of newly-added codes. A future update adds StatCan FSA boundary shading.</div></div></div>
+    ${explorerHTML()}
+    <div class="foot">Figures &amp; examples exact from the NAR merged dataset · interpretive reasoning is analysis, not official Canada Post statements ·
+      <a href="index.html">← all snapshots</a></div>`;
+
+  $('#themeBtn').onclick=()=>{const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+    document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');drawMap();};
+  document.querySelectorAll('.g-top').forEach(t=>t.onclick=()=>t.parentElement.classList.toggle('open'));
+  drawMap();initExplorer();
+}
+
+function groupHTML(g){
+  if(!g.count)return `<div class="group"><div class="g-top" style="cursor:default">
+    <div class="g-icon" style="background:color-mix(in srgb,${GICON[g.key][1]} 18%,transparent);color:${GICON[g.key][1]}">${GICON[g.key][0]}</div>
+    <div class="g-meta"><div class="g-name">${g.name}</div><div class="g-share">none this release</div></div>
+    <div class="g-count" style="color:var(--faint)">0</div></div></div>`;
+  const submax=Math.max(...g.provinces.map(p=>p[1]),1);
+  const bars=g.provinces.map(([n,v])=>`<div class="sb-row"><span class="sb-name">${n}</span>
+    <span class="sb-track"><span class="sb-fill" style="width:${v/submax*100}%;background:${GICON[g.key][1]}"></span></span>
+    <span class="sb-val">${fmt(v)}</span></div>`).join('');
+  const fsachips=(g.top_fsa&&g.top_fsa.length)?`<h4>Top FSAs</h4><div class="fsachips">${g.top_fsa.slice(0,10).map(f=>`<span class="fsachip">${f[0]} <b>${fmt(f[2])}</b></span>`).join('')}</div>`:'';
+  const rs=(NOTES&&NOTES.reasoning&&NOTES.reasoning[g.key])?NOTES.reasoning[g.key]:GEN_REASON[g.key]||[];
+  const reason=rs.map(p=>`<p>${p}</p>`).join('');
+  const ex=(g.examples&&g.examples.length)?`<h4>Notable changes ${g.key==='encoding'?'(top clusters)':''}</h4><div class="exlist">${g.examples.map(e=>
+    `<div class="exrow"><span class="pc">${e[0]}</span><span class="fromto"><span class="o">${esc(e[1])}</span><span class="arw">→</span><span class="nv">${esc(e[2])}</span></span><span class="cnt">${e[4]>1?'×'+fmt(e[4]):e[3]}</span></div>`).join('')}</div>`:'';
+  return `<div class="group">
+    <div class="g-top">
+      <div class="g-icon" style="background:color-mix(in srgb,${GICON[g.key][1]} 18%,transparent);color:${GICON[g.key][1]}">${GICON[g.key][0]}</div>
+      <div class="g-meta"><div class="g-name">${g.name}</div><div class="g-share">${g.provinces.length?'by province below':''}</div></div>
+      <div class="g-count" style="color:${GICON[g.key][1]}">${fmt(g.count)}</div><div class="g-chev">▸</div></div>
+    <div class="g-body">
+      ${g.provinces.length?'<h4>Breakdown by province</h4><div class="subbar">'+bars+'</div>':''}
+      ${fsachips}
+      <h4>Likely reasoning</h4><div class="reason"><span class="tag">◆ inferred · not official</span>${reason}</div>
+      ${ex}</div></div>`;
+}
+
+/* explorer built from city-change group examples */
+let RECS=[];
+function explorerHTML(){
+  RECS=[];
+  DETAIL.groups.forEach(g=>{
+    if(['boundary','substantive','encoding'].includes(g.key)&&g.examples)
+      g.examples.forEach(e=>RECS.push([e[0],g.key,e[1],e[2],e[3],e[4]]));
+  });
+  if(!RECS.length)return '';
+  return `<div class="section"><div class="sec-head"><h2>Explore the records</h2><span class="hint">top place-name changes this batch · click a row</span></div>
+    <div class="exp-tools"><input id="q" placeholder="Search postal code or place name…">
+      <div class="seg" id="catseg"><button data-c="" class="on">All</button>
+      <button data-c="boundary">Boundary</button><button data-c="substantive">Rename</button><button data-c="encoding">Encoding</button></div></div>
+    <table class="etable"><thead><tr><th>Postal code</th><th>Category</th><th>Change</th><th>Prov</th></tr></thead><tbody id="etbody"></tbody></table>
+    <div style="font-size:.8rem;color:var(--faint);margin-top:10px">Showing the top distinct changes per category.
+    The full record list lives in the <a href="index.html">City changes</a> tab.</div></div>`;
+}
+let curCat='';
+function initExplorer(){
+  if(!RECS.length)return;
+  $('#q').oninput=renderTable;
+  $('#catseg').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+    [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');curCat=b.dataset.c;renderTable();};
+  renderTable();
+}
+function renderTable(){
+  const q=$('#q').value.toLowerCase();
+  const rows=RECS.filter(r=>(!curCat||r[1]===curCat)&&(!q||r[0].toLowerCase().includes(q)||r[2].toLowerCase().includes(q)||r[3].toLowerCase().includes(q)));
+  $('#etbody').innerHTML=rows.map(r=>`<tr data-pc="${r[0]}" data-c="${r[1]}" data-o="${esc(r[2])}" data-n="${esc(r[3])}" data-p="${r[4]}" data-cnt="${r[5]}">
+    <td class="pc">${r[0]}</td><td><span class="chip ${r[1]}">${CATNAME[r[1]]}</span></td>
+    <td><span style="color:var(--dim)">${esc(r[2])}</span> → <b>${esc(r[3])}</b>${r[5]>1?' <span style="color:var(--faint)">×'+fmt(r[5])+'</span>':''}</td>
+    <td style="font-family:var(--mono);color:var(--faint)">${r[4]}</td></tr>`).join('')
+    ||`<tr><td colspan="4" style="color:var(--faint);padding:18px 12px">No records match.</td></tr>`;
+  document.querySelectorAll('#etbody tr[data-pc]').forEach(tr=>tr.onclick=()=>openDrawer(tr.dataset));
+}
+function openDrawer(d){
+  const fsa=d.pc.slice(0,3);
+  $('#drawer').innerHTML=`<button class="close" id="dclose">×</button>
+    <div class="dpc">${d.pc.slice(0,3)} ${d.pc.slice(3)}</div>
+    <div style="color:var(--dim);font-size:.85rem;margin:4px 0 18px">Changed in the ${DETAIL.label} release</div>
+    <div class="drow"><span class="dk">Change type</span><span class="dv"><span class="chip ${d.c}">${CATNAME[d.c]}</span></span></div>
+    <div class="drow"><span class="dk">Place name</span><span class="dv">${esc(d.o)} → ${esc(d.n)}</span></div>
+    ${(+d.cnt>1)?`<div class="drow"><span class="dk">Codes affected</span><span class="dv">${fmt(+d.cnt)} in this batch</span></div>`:''}
+    <div class="drow"><span class="dk">Province</span><span class="dv">${d.p}</span></div>
+    <div class="drow"><span class="dk">FSA</span><span class="dv">${fsa}</span></div>
+    <div class="drow"><span class="dk">Source</span><span class="dv">NAR (merged)</span></div>
+    <div class="dreason"><div class="tag">◆ inferred · not official</div>${CATREASON[d.c]}</div>`;
+  $('#drawer').classList.add('open');$('#scrim').classList.add('on');$('#dclose').onclick=closeDrawer;
+}
+function closeDrawer(){$('#drawer').classList.remove('open');$('#scrim').classList.remove('on');}
+$('#scrim').onclick=closeDrawer;
+
+const tt=$('#tt');
+function drawMap(){
+  const svg=$('#map');if(!svg)return;svg.innerHTML='';
+  const W=900,H=460,pad=24,lon0=-141,lon1=-52,lat0=41,lat1=71;
+  const x=lon=>pad+(W-2*pad)*(lon-lon0)/(lon1-lon0);
+  const y=lat=>pad+(H-2*pad)*(1-(lat-lat0)/(lat1-lat0));
+  const grid=cssv('--border'),dim=cssv('--faint'),acc=cssv('--accent');
+  [-120,-100,-80,-60].forEach(l=>{svg.appendChild(mk('line',{x1:x(l),x2:x(l),y1:pad,y2:H-pad,stroke:grid,'stroke-width':1,'stroke-dasharray':'2 4'}));
+    const t=mk('text',{x:x(l),y:H-8,fill:dim,'font-size':10,'text-anchor':'middle','font-family':'ui-monospace'});t.textContent=l+'°';svg.appendChild(t);});
+  [50,60,70].forEach(l=>{svg.appendChild(mk('line',{x1:pad,x2:W-pad,y1:y(l),y2:y(l),stroke:grid,'stroke-width':1,'stroke-dasharray':'2 4'}));
+    const t=mk('text',{x:8,y:y(l)+3,fill:dim,'font-size':10,'font-family':'ui-monospace'});t.textContent=l+'°';svg.appendChild(t);});
+  DETAIL.points.forEach(([lo,la])=>{if(la>lat1+2)return;
+    const c=mk('circle',{cx:x(lo),cy:y(Math.min(la,lat1)),r:3.4,fill:acc,'fill-opacity':.72,stroke:cssv('--surface'),'stroke-width':.5});
+    c.addEventListener('mousemove',ev=>{tt.textContent=`${la.toFixed(2)}, ${lo.toFixed(2)}`;tt.style.opacity=1;tt.style.left=(ev.clientX+12)+'px';tt.style.top=(ev.clientY+12)+'px';});
+    c.addEventListener('mouseleave',()=>tt.style.opacity=0);svg.appendChild(c);});
+}
+
+boot();
+</script>
+</body>
+</html>

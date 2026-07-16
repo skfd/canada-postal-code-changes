@@ -1,0 +1,30 @@
+{
+  "narrative": [
+    "February 2026 is the inflection point of the dataset. In a single step the active count jumped by <b>52,427</b> codes — more than the previous three years of growth combined — with <b>zero</b> removals. Statistics Canada didn't prune anything; it bulk-loaded a large tranche of new delivery points, the signature of a feed re-sync rather than organic growth.",
+    "The additions land where you'd expect density and construction: dense urban cores — Toronto's <b>M5W</b> (586), Montréal's <b>H3C</b> (532, the Griffintown condo belt), Calgary's <b>T2P</b> (318) — and fast-growing commuter suburbs like Vaudreuil <b>J7V</b> (349), Surrey <b>V3S</b> (284) and Markham <b>L3R</b> (274). Ontario (17,701) and Quebec (11,641) dominate by volume, but <b>New Brunswick's 5,231 is the outlier</b> — far above its ~2% population share, split between Saint John (E2L) and Moncton (E1C) and a band of rural southern-NB routes (E4P/E4T/E4Z) that look like a long-overdue backfill.",
+    "Underneath sit <b class=\"k\">8,088 genuine changes</b> — 6,392 boundary reassignments and 1,696 substantive renames, two-thirds of every real rename in the six-snapshot history. The bulk is <b>municipal-designation realignment, and it runs in both directions.</b> Greater Victoria pulled suburbs into the metro name — <b>Langford → Victoria</b> (1,392 codes), <b>North Cowichan → Duncan</b> (588) — while Quebec's Mauricie did the opposite, re-splitting the amalgamated city of Shawinigan back into its historical communities <b>Grand-Mère</b> (831) and <b>Shawinigan-Sud</b> (791). Windsor, QC absorbed Saint-Claude (1,358); Truro, NS took in Bible Hill (317).",
+    "The second story is noise: <b>75,318 “changes” that aren't</b>. The feed repaired 301 distinct mis-encoded French names — and it's the <i>biggest</i> cities that dominate, because they appear on the most codes: <b>Montréal alone accounts for 20,184</b>, Québec 18,891, Trois-Rivières 5,879, Lévis 5,362. Mojibake like <b>MontrÃ©al</b> and <b>Main-Ã-Dieu</b> was normalised to <b>Montreal</b> and <b>Main-A-Dieu</b>. No place was renamed; only the bytes were fixed, so we quarantine the lot from every real total.",
+    "The two phenomena draw different maps. Additions favour Ontario and Quebec by raw volume, but genuine reorganisation tilts to Quebec (2,884 real) and British Columbia (2,092) — a reminder that <b>where codes are added and where places are actually reshaped are not the same country.</b>"
+  ],
+  "reasoning": {
+    "added": [
+      "The absence of any removals plus a step-change of this size points to a <b>bulk delivery-area load</b> — Statistics Canada re-syncing NAR to a fresh Canada Post address extract, not organic year-over-year growth (which has run 700–17,000/period elsewhere in the series).",
+      "The top FSAs read as two kinds of place: dense urban cores — Toronto <b>M5W</b>, Montréal <b>H3C</b>, Calgary <b>T2P</b>, Edmonton <b>T5J</b>, Winnipeg <b>R3C</b> — alongside high-growth commuter suburbs (Vaudreuil <b>J7V</b>, Surrey <b>V3S</b>, Markham <b>L3R</b>). New condo towers and greenfield subdivisions both generate blocks of fresh codes.",
+      "New Brunswick's 5,231 is the anomaly worth flagging: roughly triple its population share, split between the Saint John (E2L) and Moncton (E1C) urban areas and a band of rural southern-NB routes (E4P/E4T/E4Z) — the profile of a one-time backfill of routes NAR had been missing."
+    ],
+    "boundary": [
+      "A postal code's municipal label changed while the location did not — the signature of <b>municipal-boundary realignment</b>. What's striking here is that it runs <b>in both directions</b> at once.",
+      "<b>Consolidation</b> dominates the west: Greater Victoria absorbed its suburbs' delivery names (Langford → Victoria, 1,392; North Cowichan → Duncan, 588), while Windsor, QC took in Saint-Claude (1,358) and Truro, NS absorbed Bible Hill (317).",
+      "<b>The reverse happens in Quebec's Mauricie:</b> codes previously labelled with the amalgamated city “Shawinigan” were re-split back into the historical community names <b>Grand-Mère</b> (831) and <b>Shawinigan-Sud</b> (791) — NAR restoring finer-grained pre-merger designations."
+    ],
+    "substantive": [
+      "True name changes that neither a boundary reassignment nor an encoding artefact explains. Quebec leads (611), then Nova Scotia (295) and Ontario (226) — a flatter geography than the boundary group, which is what you expect from one-off local corrections rather than a regional merger.",
+      "The texture is small and specific — delivery-area splits and consolidations (Glovertown → Glovertown South; Pomquet → Antigonish), not civic renamings in the news sense. This is the group most worth a manual spot-check each cycle: a genuine town renaming would hide here."
+    ],
+    "encoding": [
+      "Not real changes. Between releases the feed's character encoding shifted, so accented French/Acadian names stored as <b>mojibake</b> were repaired to a clean form. 301 distinct names were fixed across 75,001 codes.",
+      "The count is dominated by the <b>largest cities</b>, because they sit on the most codes: <b>Montréal alone is 20,184</b>, Québec 18,891, Trois-Rivières 5,879, Lévis 5,362. Provincially that means Quebec (70,919) with a tail in Acadian New Brunswick and Ontario's Franco names (Orléans).",
+      "We surface the count for transparency but never mix it into any real-change total. Treating these as “renames” is exactly the trap that made the raw dataset read as 163,167 city changes when only ~12,074 are genuine."
+    ]
+  }
+}

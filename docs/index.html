@@ -3,441 +3,520 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Canadian Postal Code Changes (2022-2026)</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-<style>
-:root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface2: #232733;
-  --border: #2d3245;
-  --text: #e4e6eb;
-  --text-dim: #8b8fa3;
-  --accent: #6c8cff;
-  --green: #4ade80;
-  --red: #f87171;
-  --yellow: #fbbf24;
-  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
-}
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
-.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
-
-/* Header */
-header { text-align: center; padding: 40px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
-header h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 8px; }
-header p { color: var(--text-dim); font-size: 0.95rem; }
-
-/* Nav tabs */
-.tabs { display: flex; gap: 4px; margin-bottom: 32px; background: var(--surface); border-radius: 8px; padding: 4px; }
-.tab { flex: 1; padding: 10px 16px; text-align: center; border: none; background: none; color: var(--text-dim); cursor: pointer; border-radius: 6px; font-size: 0.9rem; font-family: var(--font); transition: all 0.15s; }
-.tab:hover { color: var(--text); background: var(--surface2); }
-.tab.active { background: var(--accent); color: #fff; }
-
-/* Cards */
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
-.card .label { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-.card .value { font-size: 1.8rem; font-weight: 700; font-family: var(--mono); }
-.card .value.green { color: var(--green); }
-.card .value.red { color: var(--red); }
-.card .value.yellow { color: var(--yellow); }
-.card .value.accent { color: var(--accent); }
-
-/* Charts */
-.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
-.chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
-.chart-box h3 { font-size: 0.95rem; margin-bottom: 16px; color: var(--text-dim); }
-@media (max-width: 768px) { .chart-row { grid-template-columns: 1fr; } }
-
-/* Sections */
-.section { margin-bottom: 40px; }
-.section h2 { font-size: 1.2rem; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
-.section h2 .badge { font-size: 0.75rem; background: var(--surface2); color: var(--text-dim); padding: 2px 10px; border-radius: 12px; font-weight: 400; }
-.view { display: none; }
-.view.active { display: block; }
-
-/* Search & filters */
-.filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-.filters input, .filters select {
-  padding: 8px 14px; background: var(--surface); border: 1px solid var(--border);
-  border-radius: 6px; color: var(--text); font-size: 0.85rem; font-family: var(--font);
-  min-width: 160px;
-}
-.filters input:focus, .filters select:focus { outline: none; border-color: var(--accent); }
-.filters input::placeholder { color: var(--text-dim); }
-
-/* Tables */
-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-thead th { text-align: left; padding: 10px 12px; background: var(--surface2); color: var(--text-dim); font-weight: 500; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1; }
-tbody td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
-tbody tr:hover { background: var(--surface2); }
-.table-wrap { max-height: 500px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
-td.pc { font-family: var(--mono); letter-spacing: 0.05em; }
-.change-added { color: var(--green); }
-.change-removed { color: var(--red); }
-.change-city { color: var(--yellow); }
-.sub-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
-.sub-technical { background: rgba(139,143,163,0.15); color: var(--text-dim); }
-.sub-real { background: rgba(74,222,128,0.15); color: var(--green); }
-
-/* Load more */
-.load-more { display: block; width: 100%; padding: 12px; margin-top: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--accent); cursor: pointer; font-family: var(--font); font-size: 0.9rem; }
-.load-more:hover { background: var(--surface2); }
-
-/* Loading */
-.loading { text-align: center; padding: 60px 20px; color: var(--text-dim); }
-</style>
+<title>Canadian Postal Code Changes (2022–2026)</title>
 <script data-goatcounter="https://post-codes.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
+<style>
+:root{
+  --bg:#0f1117;--surface:#161925;--surface2:#1e2230;--surface3:#262b3b;
+  --border:#2b3040;--border2:#363c4f;--ink:#e7e9f0;--dim:#9aa0b6;--faint:#6a7089;
+  --accent:#7d95ff;--accent-soft:rgba(125,149,255,.14);
+  --green:#42d392;--red:#f6707a;--amber:#f5b73d;--noise:#767c94;--violet:#b083f0;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.5);
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:light){:root{
+  --bg:#f4f6fa;--surface:#fff;--surface2:#f7f9fc;--surface3:#eef1f7;
+  --border:#e2e6ef;--border2:#d3d9e6;--ink:#1a1f2e;--dim:#5b6379;--faint:#8b93a8;
+  --accent:#4f68e6;--accent-soft:rgba(79,104,230,.10);
+  --green:#12a866;--red:#e0424f;--amber:#c9860a;--noise:#8b92a6;--violet:#8a5cf0;
+  --shadow:0 1px 2px rgba(20,30,60,.06),0 10px 30px -18px rgba(20,30,60,.25);}}
+:root[data-theme="dark"]{
+  --bg:#0f1117;--surface:#161925;--surface2:#1e2230;--surface3:#262b3b;
+  --border:#2b3040;--border2:#363c4f;--ink:#e7e9f0;--dim:#9aa0b6;--faint:#6a7089;
+  --accent:#7d95ff;--accent-soft:rgba(125,149,255,.14);
+  --green:#42d392;--red:#f6707a;--amber:#f5b73d;--noise:#767c94;--violet:#b083f0;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.5);}
+:root[data-theme="light"]{
+  --bg:#f4f6fa;--surface:#fff;--surface2:#f7f9fc;--surface3:#eef1f7;
+  --border:#e2e6ef;--border2:#d3d9e6;--ink:#1a1f2e;--dim:#5b6379;--faint:#8b93a8;
+  --accent:#4f68e6;--accent-soft:rgba(79,104,230,.10);
+  --green:#12a866;--red:#e0424f;--amber:#c9860a;--noise:#8b92a6;--violet:#8a5cf0;
+  --shadow:0 1px 2px rgba(20,30,60,.06),0 10px 30px -18px rgba(20,30,60,.25);}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 22px 72px}
+h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:-.01em;text-wrap:balance}
+a{color:var(--accent);text-decoration:none}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dot{width:9px;height:9px;border-radius:3px;flex:none;display:inline-block}
+
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:650}
+.top h1{font-size:1.7rem;margin-top:6px}
+.sub{color:var(--dim);margin-top:8px;max-width:62ch;font-size:.94rem}
+.theme-btn{flex:none;background:var(--surface2);border:1px solid var(--border);color:var(--dim);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:1rem}
+
+.tabs{display:flex;gap:4px;margin:22px 0 28px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px;flex-wrap:wrap}
+.tab{flex:1;min-width:90px;padding:9px 14px;text-align:center;border:none;background:none;color:var(--dim);cursor:pointer;border-radius:7px;font:inherit;font-size:.88rem;transition:.14s}
+.tab:hover{color:var(--ink);background:var(--surface2)}
+.tab.active{background:var(--accent);color:#fff;font-weight:600}
+.view{display:none}.view.active{display:block}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:14px}
+.hcard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
+.hcard.lead{background:linear-gradient(150deg,var(--accent-soft),transparent 70%),var(--surface)}
+.hl{font-size:.74rem;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.hv{font-size:2.1rem;font-weight:700;margin-top:4px;line-height:1.05}
+.hcard.lead .hv{color:var(--accent)}
+.hv.green{color:var(--green)}.hv.red{color:var(--red)}.hv.amber{color:var(--amber)}
+.hv .pm{font-size:1.3rem;vertical-align:.12em;margin-right:2px}
+.hn{font-size:.82rem;color:var(--faint);margin-top:6px}
+.hn .muted{color:var(--faint)}
+.hrow{display:flex;gap:18px}.hrow>div{flex:1}
+@media(max-width:720px){.hero{grid-template-columns:1fr 1fr}.hcard.lead{grid-column:1/-1}}
+
+.section{margin-top:38px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.sec-head h2{font-size:1.12rem}.sec-head .hint{font-size:.82rem;color:var(--faint)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.panel h3{font-size:.98rem;margin-bottom:2px}.panel .psub{font-size:.82rem;color:var(--faint);margin-bottom:14px}
+
+.findings-note{font-size:.82rem;color:var(--faint);display:flex;align-items:center;gap:8px}
+.findings-note .live{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.insights{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:720px){.insights{grid-template-columns:1fr}}
+.insight{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.insight.warn{border-left-color:var(--amber)}.insight.good{border-left-color:var(--green)}
+.insight .big{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.insight.warn .big{color:var(--amber)}.insight.good .big{color:var(--green)}
+.insight p{margin:6px 0 0;font-size:.88rem;color:var(--dim)}
+
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.duo{grid-template-columns:1fr}}
+svg.chart{width:100%;height:auto;display:block;overflow:visible}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.82rem;color:var(--dim);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:none;background:none;color:var(--dim);font:inherit;font-size:.8rem;padding:6px 12px;border-radius:7px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff;font-weight:600}
+
+.mapwrap{display:grid;grid-template-columns:1.35fr .65fr;gap:22px;align-items:center}
+@media(max-width:720px){.mapwrap{grid-template-columns:1fr}}
+.tilegrid{display:grid;gap:6px;grid-template-columns:repeat(7,1fr)}
+.tile{aspect-ratio:1;border-radius:9px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform .12s,box-shadow .12s}
+.tile:hover{transform:translateY(-2px);box-shadow:0 6px 16px -6px rgba(0,0,0,.5);outline:2px solid var(--accent)}
+.tile .ab{font-family:var(--mono);font-size:.82rem;font-weight:700}
+.tile .tv{font-family:var(--mono);font-size:.6rem;opacity:.85;margin-top:1px}
+.ramp{height:12px;border-radius:6px;margin:14px 0 6px}
+.ramp-lbl{display:flex;justify-content:space-between;font-size:.75rem;color:var(--faint)}
+.mini{display:flex;justify-content:space-between;font-size:.86rem;padding:5px 0;border-bottom:1px solid var(--border)}
+.mini:last-child{border-bottom:none}.mini .k{color:var(--ink)}.mini .v{font-weight:600}
+.topprov h4{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin:16px 0 6px}
+
+.sn-bar{display:flex;height:44px;border-radius:10px;overflow:hidden;margin:4px 0 16px;border:1px solid var(--border)}
+.sn-seg{display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden}
+.sn-seg.noise{background:var(--noise)}.sn-seg.real{background:var(--amber);color:#1a1200}
+.sn-legend{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:620px){.sn-legend{grid-template-columns:1fr}}
+.sn-group h4{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin:0 0 8px}
+.sn-row{display:flex;justify-content:space-between;align-items:center;font-size:.86rem;padding:5px 0;border-bottom:1px solid var(--border)}
+.sn-row:last-child{border-bottom:none}.sn-row .k{display:flex;align-items:center;gap:8px;color:var(--dim)}.sn-row .v{color:var(--ink);font-weight:600}
+
+/* snapshot cards */
+.snapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.snapcard{display:block;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:16px 18px;box-shadow:var(--shadow);transition:.14s;color:var(--ink)}
+.snapcard:hover{border-color:var(--accent);transform:translateY(-2px)}
+.snapcard .sc-when{font-size:.72rem;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.snapcard .sc-net{font-size:1.5rem;font-weight:700;margin:4px 0 2px}
+.snapcard .sc-net.up{color:var(--green)}.snapcard .sc-net.down{color:var(--red)}
+.snapcard .sc-range{font-size:.8rem;color:var(--faint);margin-bottom:12px}
+.snapcard .sc-metrics{display:flex;gap:14px;font-size:.82rem;border-top:1px solid var(--border);padding-top:10px}
+.snapcard .sc-metrics b{font-family:var(--mono);font-weight:700}
+.snapcard .go{font-size:.8rem;color:var(--accent);margin-top:12px;font-weight:600}
+
+/* tables (Added/Removed/City) */
+.filters{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.filters input,.filters select{padding:8px 13px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--ink);font:inherit;font-size:.85rem;min-width:150px}
+.filters input:focus,.filters select:focus{outline:none;border-color:var(--accent)}
+.table-wrap{max-height:560px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+table.data{width:100%;border-collapse:collapse;font-size:.85rem}
+table.data thead th{text-align:left;padding:10px 12px;background:var(--surface2);color:var(--dim);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);position:sticky;top:0}
+table.data tbody td{padding:8px 12px;border-bottom:1px solid var(--border)}
+table.data tbody tr:hover{background:var(--surface2)}
+td.pc{font-family:var(--mono);letter-spacing:.04em}
+.c-added{color:var(--green)}.c-removed{color:var(--red)}.c-city{color:var(--amber)}
+.sub-badge{display:inline-block;padding:1px 7px;border-radius:20px;font-size:.72rem;font-weight:600}
+.sub-tech{background:rgba(118,124,148,.2);color:var(--noise)}.sub-real{background:rgba(66,211,146,.16);color:var(--green)}
+.load-more{display:block;width:100%;padding:11px;margin-top:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--accent);cursor:pointer;font:inherit;font-size:.88rem}
+.load-more:hover{background:var(--surface2)}
+.badge{display:inline-block;background:var(--surface2);border:1px solid var(--border);color:var(--dim);font-size:.7rem;padding:2px 9px;border-radius:20px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;vertical-align:middle}
+
+#tt{position:fixed;pointer-events:none;background:var(--surface3);border:1px solid var(--border2);border-radius:8px;padding:8px 11px;font-size:.8rem;color:var(--ink);box-shadow:var(--shadow);opacity:0;transition:opacity .1s;z-index:50;max-width:230px}
+#tt .tt-t{font-weight:700;margin-bottom:3px}
+#tt .tt-r{display:flex;justify-content:space-between;gap:14px;color:var(--dim)}
+#tt .tt-r b{color:var(--ink);font-family:var(--mono)}
+.loading{text-align:center;padding:50px 20px;color:var(--faint)}
+.foot{margin-top:44px;padding-top:20px;border-top:1px solid var(--border);text-align:center;color:var(--faint);font-size:.82rem}
+.foot a{color:var(--accent)}
+</style>
 </head>
 <body>
-<div class="container">
-  <header>
-    <h1>Canadian Postal Code Changes</h1>
-    <p>Tracking additions, removals, and city name changes across NAR and GeoNames data (2022-2026)</p>
-  </header>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="eyebrow">Canadian Postal Codes · 2022–2026</div>
+      <h1>What actually changed on the map</h1>
+      <p class="sub">Real additions, removals, and genuine city renames across six Statistics
+      Canada NAR snapshots — with the encoding noise filtered out. <span class="badge">Beta</span></p>
+    </div>
+    <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </div>
 
-  <div class="tabs">
+  <div class="tabs" id="tabs">
     <button class="tab active" data-view="overview">Overview</button>
-    <button class="tab" data-view="removed">Removed</button>
+    <button class="tab" data-view="snapshots">Snapshots</button>
     <button class="tab" data-view="added">Added</button>
-    <button class="tab" data-view="city">City Changes</button>
+    <button class="tab" data-view="removed">Removed</button>
+    <button class="tab" data-view="city">City changes</button>
   </div>
 
-  <!-- Overview -->
+  <!-- OVERVIEW -->
   <div class="view active" id="view-overview">
-    <div class="cards" id="summary-cards"></div>
-    <div class="chart-row">
-      <div class="chart-box">
-        <h3>Changes by Period</h3>
-        <canvas id="chart-timeline"></canvas>
-      </div>
-      <div class="chart-box">
-        <h3>Changes by Province</h3>
-        <canvas id="chart-provinces"></canvas>
-      </div>
-    </div>
-  </div>
+    <div class="hero" id="hero"></div>
 
-  <!-- Removed -->
-  <div class="view" id="view-removed">
     <div class="section">
-      <h2>Removed Postal Codes <span class="badge" id="removed-count"></span></h2>
-      <div class="filters">
-        <input type="text" id="removed-search" placeholder="Search postal code or city...">
-        <select id="removed-prov"><option value="">All Provinces</option></select>
+      <div class="sec-head"><h2>Findings</h2>
+        <span class="findings-note"><span class="live"></span>curated highlights</span></div>
+      <div class="insights" id="insights"></div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head"><h2>Historic progression</h2><span class="hint">active codes &amp; net change per snapshot</span></div>
+      <div class="duo">
+        <div class="panel"><h3>Active postal codes over time</h3><div class="psub">Total live codes at each snapshot</div>
+          <svg class="chart" id="lineChart" viewBox="0 0 640 300" role="img" aria-label="Active codes over time"></svg></div>
+        <div class="panel"><h3>Net change per period</h3><div class="psub">Additions above the line, removals below</div>
+          <svg class="chart" id="barChart" viewBox="0 0 640 300" role="img" aria-label="Net change per period"></svg>
+          <div class="legend"><span><i class="dot" style="background:var(--green)"></i>Added</span><span><i class="dot" style="background:var(--red)"></i>Removed</span></div></div>
       </div>
-      <div class="table-wrap">
-        <table><thead><tr>
-          <th>Postal Code</th><th>Province</th><th>City</th><th>FSA</th><th>Removed</th>
-        </tr></thead><tbody id="removed-body"></tbody></table>
+    </div>
+
+    <div class="section">
+      <div class="panel">
+        <div class="sec-head" style="margin-bottom:12px">
+          <div><h3>Where the changes happened</h3><div class="psub">Province tile-grid, shaded by the selected metric</div></div>
+          <div class="seg" id="mapToggle">
+            <button data-metric="added" class="on">Added</button>
+            <button data-metric="removed">Removed</button>
+            <button data-metric="city_real">Real renames</button>
+            <button data-metric="csd_changed">Municipality moves</button>
+          </div>
+        </div>
+        <div class="mapwrap">
+          <div class="tilegrid" id="tileGrid"></div>
+          <div><div class="psub" id="mapCaption"></div>
+            <div class="ramp" id="ramp"></div>
+            <div class="ramp-lbl"><span>fewer</span><span id="rampMax">more</span></div>
+            <div class="topprov"><h4>Top provinces</h4><div id="topProv"></div></div></div>
+        </div>
       </div>
-      <button class="load-more" id="removed-more" style="display:none">Load more...</button>
+    </div>
+
+    <div class="section" id="indepth">
+      <div class="sec-head"><h2>In depth: why 163,167 becomes 12,074</h2><span class="hint">the raw total, unpacked</span></div>
+      <div class="panel">
+        <div class="psub" style="margin-bottom:12px">The NAR feed re-encodes French place names between
+          releases, so a single accent repair (e.g. <b>MontrÃ©al → Montréal</b>) registers as a “city change.”
+          We treat those as noise and count only boundary shifts and genuine renames.</div>
+        <div class="sn-bar" id="snBar"><div class="sn-seg noise" id="segNoise"></div><div class="sn-seg real" id="segReal"></div></div>
+        <div class="sn-legend"><div class="sn-group"><h4 style="color:var(--noise)">Technical / normalization — excluded</h4><div id="noiseList"></div></div>
+          <div class="sn-group"><h4 style="color:var(--amber)">Substantive — counted</h4><div id="realList"></div></div></div>
+      </div>
     </div>
   </div>
 
-  <!-- Added -->
+  <!-- SNAPSHOTS -->
+  <div class="view" id="view-snapshots">
+    <div class="sec-head"><h2>Explore each snapshot</h2><span class="hint">open a release for its full deep-dive</span></div>
+    <div class="snapgrid" id="snapGrid"></div>
+  </div>
+
+  <!-- ADDED -->
   <div class="view" id="view-added">
-    <div class="section">
-      <h2>Added Postal Codes <span class="badge" id="added-count"></span></h2>
-      <div class="filters">
-        <input type="text" id="added-search" placeholder="Search postal code or city...">
-        <select id="added-prov"><option value="">All Provinces</option></select>
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr>
-          <th>Postal Code</th><th>Province</th><th>City</th><th>FSA</th><th>Added</th>
-        </tr></thead><tbody id="added-body"></tbody></table>
-      </div>
-      <button class="load-more" id="added-more" style="display:none">Load more...</button>
-    </div>
+    <div class="sec-head"><h2>Added postal codes <span class="badge" id="added-count"></span></h2></div>
+    <div class="filters"><input type="text" id="added-search" placeholder="Search postal code or city…"><select id="added-prov"><option value="">All provinces</option></select></div>
+    <div class="table-wrap"><table class="data"><thead><tr><th>Postal code</th><th>Province</th><th>City</th><th>FSA</th><th>Added</th></tr></thead><tbody id="added-body"></tbody></table></div>
+    <button class="load-more" id="added-more" style="display:none">Load more…</button>
+    <div class="loading" id="added-loading">Loading…</div>
   </div>
 
-  <!-- City Changes -->
+  <!-- REMOVED -->
+  <div class="view" id="view-removed">
+    <div class="sec-head"><h2>Removed postal codes <span class="badge" id="removed-count"></span></h2></div>
+    <div class="filters"><input type="text" id="removed-search" placeholder="Search postal code or city…"><select id="removed-prov"><option value="">All provinces</option></select></div>
+    <div class="table-wrap"><table class="data"><thead><tr><th>Postal code</th><th>Province</th><th>City</th><th>FSA</th><th>Removed</th></tr></thead><tbody id="removed-body"></tbody></table></div>
+    <button class="load-more" id="removed-more" style="display:none">Load more…</button>
+    <div class="loading" id="removed-loading">Loading…</div>
+  </div>
+
+  <!-- CITY -->
   <div class="view" id="view-city">
-    <div class="section">
-      <h2>City Name Changes <span class="badge" id="city-count"></span></h2>
-      <div class="filters">
-        <input type="text" id="city-search" placeholder="Search postal code or city...">
-        <select id="city-prov"><option value="">All Provinces</option></select>
-        <select id="city-subtype">
-          <option value="">All Subtypes</option>
-          <option value="substantive_only">Substantive Only</option>
-          <option value="encoding">Encoding/Mojibake</option>
-          <option value="accent_normalization">Accent Normalization</option>
-          <option value="punctuation">Punctuation</option>
-          <option value="spacing">Spacing</option>
-          <option value="abbreviation">Abbreviation</option>
-          <option value="boundary">Boundary</option>
-          <option value="rename">Rename</option>
-          <option value="substantive">Substantive</option>
-        </select>
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr>
-          <th>Postal Code</th><th>Province</th><th>Old City</th><th>New City</th><th>Subtype</th><th>FSA</th><th>Date</th>
-        </tr></thead><tbody id="city-body"></tbody></table>
-      </div>
-      <button class="load-more" id="city-more" style="display:none">Load more...</button>
+    <div class="sec-head"><h2>City name changes <span class="badge" id="city-count"></span></h2></div>
+    <div class="filters">
+      <input type="text" id="city-search" placeholder="Search postal code or city…">
+      <select id="city-prov"><option value="">All provinces</option></select>
+      <select id="city-subtype">
+        <option value="">All subtypes</option><option value="real">Real only</option>
+        <option value="boundary">Boundary</option><option value="substantive">Substantive</option>
+        <option value="rename">Rename</option><option value="encoding">Encoding</option>
+        <option value="abbreviation">Abbreviation</option><option value="accent_normalization">Accent</option>
+      </select>
     </div>
+    <div class="table-wrap"><table class="data"><thead><tr><th>Postal code</th><th>Province</th><th>Old city</th><th>New city</th><th>Subtype</th><th>FSA</th></tr></thead><tbody id="city-body"></tbody></table></div>
+    <button class="load-more" id="city-more" style="display:none">Load more…</button>
+    <div class="loading" id="city-loading">Loading…</div>
   </div>
 
-  <div class="loading" id="loading">Loading data...</div>
-
-  <footer style="margin-top: 48px; padding: 24px 0; border-top: 1px solid var(--border); text-align: center; color: var(--text-dim); font-size: 0.85rem;">
-    <p style="margin-bottom: 8px;">
-      <strong>Data Sources:</strong>
-      <a href="https://www150.statcan.gc.ca/n1/pub/46-26-0002/462600022022001-eng.htm" target="_blank" style="color: var(--accent);">Statistics Canada NAR</a> (Open Licence) ·
-      <a href="https://geocoder.ca" target="_blank" style="color: var(--accent);">Geocoder.ca</a> (CC BY 2.5) ·
-      <a href="https://www.geonames.org" target="_blank" style="color: var(--accent);">GeoNames</a> (CC BY 4.0)
-    </p>
-    <p>
-      Software licensed under MIT License · Data subject to original source licenses
-    </p>
-  </footer>
+  <div class="foot">
+    <p style="margin:0 0 8px"><strong>Data sources:</strong>
+      <a href="https://www150.statcan.gc.ca/n1/pub/46-26-0002/462600022022001-eng.htm" target="_blank">Statistics Canada NAR</a> (Open Licence) ·
+      <a href="https://geocoder.ca" target="_blank">Geocoder.ca</a> (CC BY 2.5) ·
+      <a href="https://www.geonames.org" target="_blank">GeoNames</a> (CC BY 4.0)</p>
+    <p style="margin:0">Software under MIT · Data subject to original source licenses</p>
+  </div>
 </div>
 
+<div id="tt"><div class="tt-t"></div></div>
+
 <script>
-const PAGE_SIZE = 200;
-const state = {
-  summary: null, timeline: null, byProvince: null,
-  added: null, removed: null, cityChanged: null,
-  charts: {}
+"use strict";
+const $=s=>document.querySelector(s);
+const fmt=n=>(n||0).toLocaleString('en-CA');
+const cssv=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const NS='http://www.w3.org/2000/svg';
+const mk=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+const tt=$('#tt');
+function showTT(html,x,y){tt.innerHTML=html;tt.style.opacity=1;const w=tt.offsetWidth,h=tt.offsetHeight;
+  let nx=x+14,ny=y+14;if(nx+w>innerWidth-8)nx=x-w-14;if(ny+h>innerHeight-8)ny=y-h-14;tt.style.left=nx+'px';tt.style.top=ny+'px';}
+function hideTT(){tt.style.opacity=0;}
+
+const PROV_POS={AB:[1,1],BC:[0,1],SK:[2,1],MB:[3,1],ON:[4,1],QC:[5,1],PE:[6,1],
+  YT:[1,0],NT:[2,0],NU:[3,0],NL:[6,0],NB:[4,2],NS:[5,2]};
+const METRIC_META={added:{hue:[66,211,146],label:'Postal codes added, by province'},
+  removed:{hue:[246,112,122],label:'Postal codes removed, by province'},
+  city_real:{hue:[245,183,61],label:'Real city renames, by province'},
+  csd_changed:{hue:[176,131,240],label:'Municipality (CSD) reassignments, by province'}};
+const SUBLABEL={encoding:'Encoding / mojibake',boundary:'Boundary shift',substantive:'Substantive rename',
+  abbreviation:'Abbreviation',rename:'Rename',accent_normalization:'Accent normalization',punctuation:'Punctuation',spacing:'Spacing'};
+const REAL_SUBS=['boundary','substantive','rename'];
+
+const state={summary:null,snapshots:null,byProvince:null,findings:null,curMetric:'added'};
+
+/* theme */
+$('#themeBtn').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');
+  renderLine();renderBars();renderMap(state.curMetric);
 };
 
-// Tab navigation
-document.querySelectorAll('.tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+/* tabs (lazy-load heavy tables) */
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('view-' + btn.dataset.view).classList.add('active');
-  });
+    const v=btn.dataset.view;$('#view-'+v).classList.add('active');
+    if(v==='added')lazyTable('added','added.json',renderAddedRow,['pc','city','prov','fsa']);
+    if(v==='removed')lazyTable('removed','removed.json',renderRemovedRow,['pc','city','prov','fsa']);
+    if(v==='city')lazyCity();
+  };
 });
 
-// Data loading
-async function loadData() {
-  try {
-    const [summary, timeline, byProvince, added, removed, cityChanged] = await Promise.all([
-      fetch('data/summary.json').then(r => r.json()),
-      fetch('data/timeline.json').then(r => r.json()),
-      fetch('data/by_province.json').then(r => r.json()),
-      fetch('data/added.json').then(r => r.json()),
-      fetch('data/removed.json').then(r => r.json()),
-      fetch('data/city_changed.json').then(r => r.json()),
-    ]);
-    Object.assign(state, { summary, timeline, byProvince, added, removed, cityChanged });
-    document.getElementById('loading').style.display = 'none';
-    renderAll();
-  } catch (e) {
-    document.getElementById('loading').textContent = 'Error loading data. Run: python -m src.cli generate-static';
-    console.error(e);
+async function boot(){
+  const [summary,snapshots,byProvince,findings]=await Promise.all([
+    fetch('data/summary.json').then(r=>r.json()),
+    fetch('data/snapshots.json').then(r=>r.json()),
+    fetch('data/by_province.json').then(r=>r.json()),
+    fetch('data/findings.json').then(r=>r.json()).catch(()=>null),
+  ]);
+  Object.assign(state,{summary,snapshots,byProvince,findings});
+  renderHero();renderFindings();renderLine();renderBars();renderMap('added');renderIndepth();renderSnapshots();
+}
+
+function renderHero(){
+  const s=state.summary;
+  $('#hero').innerHTML=`
+    <div class="hcard lead"><div class="hl">Net growth since 2022</div>
+      <div class="hv"><span class="pm">+</span><span class="num">${fmt(s.net_growth)}</span></div>
+      <div class="hn">${fmt(s.first_active)} → ${fmt(s.last_active)} active codes</div></div>
+    <div class="hcard"><div class="hrow">
+      <div><div class="hl">Added</div><div class="hv green num">${fmt(s.added)}</div></div>
+      <div><div class="hl">Removed</div><div class="hv red num">${fmt(s.removed)}</div></div></div>
+      <div class="hn">across ${s.snapshots-1} snapshot transitions</div></div>
+    <div class="hcard"><div class="hl">Real city renames</div>
+      <div class="hv amber num">${fmt(s.city_real)}</div>
+      <div class="hn"><span class="muted">${fmt(s.city_total)} raw — ${fmt(s.city_noise)} were encoding fixes.
+      <a href="#indepth">See breakdown ↓</a></span></div></div>`;
+}
+
+function renderFindings(){
+  const f=state.findings;if(!f){$('#insights').closest('.section').style.display='none';return;}
+  $('#insights').innerHTML=f.map(x=>`<div class="insight ${x.tone==='good'?'good':x.tone==='warn'?'warn':''}">
+    <div class="big">${esc(x.big)}</div><p>${x.text}</p></div>`).join('');
+}
+
+function renderLine(){
+  const svg=$('#lineChart');svg.innerHTML='';
+  const data=state.snapshots.map(s=>({l:s.label,v:s.active_after}));
+  const W=640,H=300,pl=54,pr=18,pt=18,pb=34;
+  const xs=i=>pl+(W-pl-pr)*i/(data.length-1);
+  const vals=data.map(d=>d.v),lo=Math.min(...vals),hi=Math.max(...vals);
+  const min=Math.floor((lo-4000)/10000)*10000,max=Math.ceil((hi+4000)/10000)*10000;
+  const ys=v=>pt+(H-pt-pb)*(1-(v-min)/(max-min));
+  const grid=cssv('--border'),dim=cssv('--dim'),acc=cssv('--accent');
+  for(let g=min;g<=max;g+=Math.round((max-min)/4/1000)*1000){
+    svg.appendChild(mk('line',{x1:pl,x2:W-pr,y1:ys(g),y2:ys(g),stroke:grid,'stroke-width':1}));
+    const t=mk('text',{x:pl-8,y:ys(g)+4,fill:dim,'font-size':11,'text-anchor':'end','font-family':'ui-monospace'});t.textContent=(g/1000)+'k';svg.appendChild(t);}
+  let d='';data.forEach((s,i)=>{d+=(i?'L':'M')+xs(i)+' '+ys(s.v)+' ';});
+  const area=d+`L${xs(data.length-1)} ${ys(min)} L${xs(0)} ${ys(min)} Z`;
+  const grad=mk('linearGradient',{id:'lg',x1:0,y1:0,x2:0,y2:1});
+  grad.appendChild(mk('stop',{offset:'0%','stop-color':acc,'stop-opacity':.28}));
+  grad.appendChild(mk('stop',{offset:'100%','stop-color':acc,'stop-opacity':0}));svg.appendChild(grad);
+  svg.appendChild(mk('path',{d:area,fill:'url(#lg)'}));
+  svg.appendChild(mk('path',{d,fill:'none',stroke:acc,'stroke-width':2.5,'stroke-linejoin':'round','stroke-linecap':'round'}));
+  data.forEach((s,i)=>{const x=xs(i),y=ys(s.v);
+    svg.appendChild(mk('circle',{cx:x,cy:y,r:4,fill:cssv('--surface'),stroke:acc,'stroke-width':2}));
+    const t=mk('text',{x,y:H-12,fill:dim,'font-size':11,'text-anchor':'middle'});t.textContent=s.l;svg.appendChild(t);
+    const hit=mk('rect',{x:x-18,y:0,width:36,height:H,fill:'transparent'});
+    hit.addEventListener('mousemove',ev=>showTT(`<div class="tt-t">${s.l}</div><div class="tt-r"><span>Active codes</span><b>${fmt(s.v)}</b></div>`,ev.clientX,ev.clientY));
+    hit.addEventListener('mouseleave',hideTT);svg.appendChild(hit);});
+  const last=data[data.length-1];
+  const lbl=mk('text',{x:xs(data.length-1),y:ys(last.v)-12,fill:acc,'font-size':12,'font-weight':700,'text-anchor':'end','font-family':'ui-monospace'});lbl.textContent=fmt(last.v);svg.appendChild(lbl);
+}
+
+function renderBars(){
+  const svg=$('#barChart');svg.innerHTML='';
+  const data=state.snapshots.filter(s=>!s.baseline);
+  const W=640,H=300,pl=20,pr=14,pt=16,pb=30;
+  const maxUp=Math.max(...data.map(d=>d.added))||1,maxDn=Math.max(...data.map(d=>d.removed))||1;
+  const mid=pt+(H-pt-pb)*0.62,upH=mid-pt,dnH=H-pb-mid,n=data.length,bw=(W-pl-pr)/n*0.52;
+  const green=cssv('--green'),red=cssv('--red'),dim=cssv('--dim');
+  svg.appendChild(mk('line',{x1:pl,x2:W-pr,y1:mid,y2:mid,stroke:cssv('--border2'),'stroke-width':1.5}));
+  data.forEach((p,i)=>{const cx=pl+(W-pl-pr)*(i+0.5)/n;
+    const ha=upH*p.added/maxUp,hr=dnH*p.removed/maxDn;
+    const ra=mk('rect',{x:cx-bw/2,y:mid-ha,width:bw,height:Math.max(ha,1),rx:3,fill:green});
+    const rr=mk('rect',{x:cx-bw/2,y:mid,width:bw,height:Math.max(hr,1),rx:3,fill:red});
+    [ra,rr].forEach(r=>{r.addEventListener('mousemove',ev=>showTT(
+      `<div class="tt-t">${p.label}</div><div class="tt-r"><span style="color:${green}">Added</span><b>+${fmt(p.added)}</b></div><div class="tt-r"><span style="color:${red}">Removed</span><b>−${fmt(p.removed)}</b></div>`,ev.clientX,ev.clientY));
+      r.addEventListener('mouseleave',hideTT);});
+    svg.appendChild(ra);svg.appendChild(rr);
+    const t=mk('text',{x:cx,y:H-10,fill:dim,'font-size':10,'text-anchor':'middle'});t.textContent=p.label;svg.appendChild(t);});
+}
+
+function lerp(a,b,t){return Math.round(a+(b-a)*t);}
+function tileColor(t,hue){const s=cssv('--surface2');
+  const sr=parseInt(s.slice(1,3),16),sg=parseInt(s.slice(3,5),16),sb=parseInt(s.slice(5,7),16);
+  const e=Math.pow(t,0.55);return `rgb(${lerp(sr,hue[0],e)},${lerp(sg,hue[1],e)},${lerp(sb,hue[2],e)})`;}
+function renderMap(metric){
+  state.curMetric=metric;const meta=METRIC_META[metric],bp=state.byProvince;
+  const entries=Object.entries(bp);
+  const vals=entries.map(([,p])=>p[metric]||0),max=Math.max(...vals),min=Math.min(...vals);
+  const lmax=Math.log(max+1),lmin=Math.log(min+1);
+  const norm=v=>(Math.log(v+1)-lmin)/(lmax-lmin||1);
+  const grid=$('#tileGrid');grid.innerHTML='';
+  entries.forEach(([ab,p])=>{
+    if(!PROV_POS[ab])return;
+    const t=document.createElement('div');t.className='tile';
+    t.style.gridColumn=(PROV_POS[ab][0]+1);t.style.gridRow=(PROV_POS[ab][1]+1);
+    const val=p[metric]||0;t.style.background=tileColor(norm(val),meta.hue);
+    const light=norm(val)>0.55,ink=light?'#12151d':cssv('--ink');
+    t.innerHTML=`<span class="ab" style="color:${ink}">${ab}</span><span class="tv" style="color:${ink}">${val>9999?(val/1000).toFixed(0)+'k':fmt(val)}</span>`;
+    t.addEventListener('mousemove',ev=>showTT(`<div class="tt-t">${esc(p.name)}</div>
+      <div class="tt-r"><span>Added</span><b>${fmt(p.added)}</b></div>
+      <div class="tt-r"><span>Removed</span><b>${fmt(p.removed)}</b></div>
+      <div class="tt-r"><span>Real renames</span><b>${fmt(p.city_real)}</b></div>
+      <div class="tt-r"><span>Municipality moves</span><b>${fmt(p.csd_changed)}</b></div>`,ev.clientX,ev.clientY));
+    t.addEventListener('mouseleave',hideTT);grid.appendChild(t);});
+  $('#mapCaption').textContent=meta.label;
+  const h=meta.hue;$('#ramp').style.background=`linear-gradient(90deg,${cssv('--surface2')},rgb(${h[0]},${h[1]},${h[2]}))`;
+  $('#rampMax').textContent=fmt(max);
+  const top=entries.slice().sort((a,b)=>(b[1][metric]||0)-(a[1][metric]||0)).slice(0,5);
+  $('#topProv').innerHTML=top.map(([,p])=>`<div class="mini"><span class="k">${esc(p.name)}</span><span class="v num">${fmt(p[metric]||0)}</span></div>`).join('');
+}
+$('#mapToggle').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');renderMap(b.dataset.metric);};
+
+function renderIndepth(){
+  const s=state.summary,tot=s.city_total;
+  const p=s.city_noise/tot*100;
+  $('#segNoise').style.width=p+'%';$('#segNoise').textContent='Technical · '+fmt(s.city_noise);
+  $('#segReal').style.width=(100-p)+'%';$('#segReal').textContent='Real · '+fmt(s.city_real);
+  const st=s.city_subtypes;
+  const row=(k,v,color)=>`<div class="sn-row"><span class="k"><i class="dot" style="background:${color}"></i>${SUBLABEL[k]||k}</span><span class="v num">${fmt(v)}</span></div>`;
+  $('#noiseList').innerHTML=Object.entries(st).filter(([k])=>!REAL_SUBS.includes(k)).sort((a,b)=>b[1]-a[1]).map(([k,v])=>row(k,v,'var(--noise)')).join('');
+  $('#realList').innerHTML=Object.entries(st).filter(([k])=>REAL_SUBS.includes(k)).sort((a,b)=>b[1]-a[1]).map(([k,v])=>row(k,v,'var(--amber)')).join('');
+}
+
+function renderSnapshots(){
+  const data=state.snapshots.filter(s=>!s.baseline).slice().reverse();
+  $('#snapGrid').innerHTML=data.map(s=>{
+    const net=s.active_after-s.active_before,up=net>=0;
+    return `<a class="snapcard" href="snapshot.html?date=${s.date}">
+      <div class="sc-when">${s.label}</div>
+      <div class="sc-net ${up?'up':'down'}">${up?'+':'−'}${fmt(Math.abs(net))}</div>
+      <div class="sc-range">${s.range}</div>
+      <div class="sc-metrics">
+        <span style="color:var(--green)">+<b>${fmt(s.added)}</b></span>
+        <span style="color:var(--red)">−<b>${fmt(s.removed)}</b></span>
+        <span style="color:var(--amber)"><b>${fmt(s.city_real)}</b> real</span></div>
+      <div class="go">Open deep dive →</div></a>`;
+  }).join('');
+}
+
+/* --- lazy tables --- */
+const PAGE=200;const loaded={};
+async function lazyTable(name,file,rowFn,searchFields){
+  if(loaded[name])return;loaded[name]=true;
+  const data=await fetch('data/'+file).then(r=>r.json());
+  $('#'+name+'-loading').style.display='none';
+  const provSel=$('#'+name+'-prov');
+  [...new Set(data.map(r=>r.prov).filter(Boolean))].sort().forEach(p=>{const o=document.createElement('option');o.value=o.textContent=p;provSel.appendChild(o);});
+  let shown=0,filtered=data;
+  function apply(){
+    const q=$('#'+name+'-search').value.toLowerCase(),prov=provSel.value;
+    filtered=data.filter(r=>(!prov||r.prov===prov)&&(!q||searchFields.some(f=>(r[f]||'').toLowerCase().includes(q))));
+    shown=0;$('#'+name+'-body').innerHTML='';$('#'+name+'-count').textContent=fmt(filtered.length)+' records';more();
   }
+  function more(){const tb=$('#'+name+'-body'),end=Math.min(shown+PAGE,filtered.length),fr=document.createDocumentFragment();
+    for(let i=shown;i<end;i++)fr.appendChild(rowFn(filtered[i]));tb.appendChild(fr);shown=end;
+    $('#'+name+'-more').style.display=shown<filtered.length?'block':'none';}
+  $('#'+name+'-search').oninput=apply;provSel.onchange=apply;$('#'+name+'-more').onclick=more;apply();
 }
+function renderAddedRow(r){const tr=document.createElement('tr');tr.innerHTML=`<td class="pc c-added">${r.pc}</td><td>${r.prov||''}</td><td>${esc(r.city||'')}</td><td>${r.fsa||''}</td><td class="num">${r.date}</td>`;return tr;}
+function renderRemovedRow(r){const tr=document.createElement('tr');tr.innerHTML=`<td class="pc c-removed">${r.pc}</td><td>${r.prov||''}</td><td>${esc(r.city||'')}</td><td>${r.fsa||''}</td><td class="num">${r.date}</td>`;return tr;}
 
-function renderAll() {
-  renderSummary();
-  renderTimeline();
-  renderProvinces();
-  setupTable('removed', state.removed, renderRemovedRow, ['pc','city','prov','fsa']);
-  setupTable('added', state.added, renderAddedRow, ['pc','city','prov','fsa']);
-  setupCityTable();
-}
-
-// Summary cards
-function renderSummary() {
-  const s = state.summary;
-  document.getElementById('summary-cards').innerHTML = `
-    <div class="card"><div class="label">Total Codes</div><div class="value accent">${fmt(s.total_codes)}</div></div>
-    <div class="card"><div class="label">Active</div><div class="value green">${fmt(s.active_codes)}</div></div>
-    <div class="card"><div class="label">Added</div><div class="value green">${fmt(s.added)}</div></div>
-    <div class="card"><div class="label">Removed</div><div class="value red">${fmt(s.removed)}</div></div>
-    <div class="card"><div class="label">City Changes</div><div class="value yellow">${fmt(s.city_changed)}</div></div>
-    <div class="card"><div class="label">Total Changes</div><div class="value accent">${fmt(s.total_changes)}</div></div>
-  `;
-}
-
-// Timeline chart
-function renderTimeline() {
-  const labels = state.timeline.map(t => t.period.replace(' to ', '\n'));
-  const ctx = document.getElementById('chart-timeline').getContext('2d');
-  state.charts.timeline = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Added', data: state.timeline.map(t => t.added), backgroundColor: '#4ade80' },
-        { label: 'Removed', data: state.timeline.map(t => t.removed), backgroundColor: '#f87171' },
-        { label: 'City Changed', data: state.timeline.map(t => t.city_changed), backgroundColor: '#fbbf24' },
-      ]
-    },
-    options: {
-      responsive: true, plugins: { legend: { labels: { color: '#8b8fa3' } } },
-      scales: {
-        x: { stacked: true, ticks: { color: '#8b8fa3', font: { size: 10 } }, grid: { color: '#2d3245' } },
-        y: { stacked: true, ticks: { color: '#8b8fa3' }, grid: { color: '#2d3245' } },
-      }
-    }
-  });
-}
-
-// Province chart
-function renderProvinces() {
-  const provs = Object.keys(state.byProvince).sort();
-  const ctx = document.getElementById('chart-provinces').getContext('2d');
-  state.charts.provinces = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: provs,
-      datasets: [
-        { label: 'Added', data: provs.map(p => state.byProvince[p].added || 0), backgroundColor: '#4ade80' },
-        { label: 'Removed', data: provs.map(p => state.byProvince[p].removed || 0), backgroundColor: '#f87171' },
-        { label: 'City Changed', data: provs.map(p => state.byProvince[p].city_changed || 0), backgroundColor: '#fbbf24' },
-      ]
-    },
-    options: {
-      indexAxis: 'y', responsive: true,
-      plugins: { legend: { labels: { color: '#8b8fa3' } } },
-      scales: {
-        x: { stacked: true, ticks: { color: '#8b8fa3' }, grid: { color: '#2d3245' } },
-        y: { stacked: true, ticks: { color: '#8b8fa3', font: { size: 11 } }, grid: { color: '#2d3245' } },
-      }
-    }
-  });
-}
-
-// Generic table setup with search + province filter + load more
-function setupTable(name, data, rowFn, searchFields) {
-  const provinces = [...new Set(data.map(r => r.prov).filter(Boolean))].sort();
-  const provSelect = document.getElementById(name + '-prov');
-  provinces.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p; opt.textContent = p;
-    provSelect.appendChild(opt);
-  });
-
-  let shown = 0;
-  let filtered = data;
-
-  function applyFilter() {
-    const q = document.getElementById(name + '-search').value.toLowerCase();
-    const prov = provSelect.value;
-    filtered = data.filter(r => {
-      if (prov && r.prov !== prov) return false;
-      if (q && !searchFields.some(f => (r[f] || '').toLowerCase().includes(q))) return false;
-      return true;
-    });
-    shown = 0;
-    document.getElementById(name + '-body').innerHTML = '';
-    document.getElementById(name + '-count').textContent = fmt(filtered.length) + ' records';
-    loadMore();
+async function lazyCity(){
+  if(loaded.city)return;loaded.city=true;
+  const data=await fetch('data/city_changed.json').then(r=>r.json());
+  $('#city-loading').style.display='none';
+  const provSel=$('#city-prov'),subSel=$('#city-subtype');
+  [...new Set(data.map(r=>r.prov).filter(Boolean))].sort().forEach(p=>{const o=document.createElement('option');o.value=o.textContent=p;provSel.appendChild(o);});
+  let shown=0,filtered=data;
+  function apply(){
+    const q=$('#city-search').value.toLowerCase(),prov=provSel.value,sub=subSel.value;
+    filtered=data.filter(r=>{
+      if(prov&&r.prov!==prov)return false;
+      if(sub==='real'){if(!REAL_SUBS.includes(r.sub))return false;}else if(sub&&r.sub!==sub)return false;
+      if(q&&!['pc','old','new','prov','fsa'].some(f=>(r[f]||'').toLowerCase().includes(q)))return false;
+      return true;});
+    shown=0;$('#city-body').innerHTML='';$('#city-count').textContent=fmt(filtered.length)+' records';more();
   }
-
-  function loadMore() {
-    const tbody = document.getElementById(name + '-body');
-    const end = Math.min(shown + PAGE_SIZE, filtered.length);
-    const frag = document.createDocumentFragment();
-    for (let i = shown; i < end; i++) {
-      frag.appendChild(rowFn(filtered[i]));
-    }
-    tbody.appendChild(frag);
-    shown = end;
-    document.getElementById(name + '-more').style.display = shown < filtered.length ? 'block' : 'none';
-  }
-
-  document.getElementById(name + '-search').addEventListener('input', applyFilter);
-  provSelect.addEventListener('change', applyFilter);
-  document.getElementById(name + '-more').addEventListener('click', loadMore);
-
-  applyFilter();
+  function more(){const tb=$('#city-body'),end=Math.min(shown+PAGE,filtered.length),fr=document.createDocumentFragment();
+    for(let i=shown;i<end;i++){const r=filtered[i],tr=document.createElement('tr');
+      const real=REAL_SUBS.includes(r.sub);
+      const badge=r.sub?`<span class="sub-badge ${real?'sub-real':'sub-tech'}">${SUBLABEL[r.sub]||r.sub}</span>`:'';
+      tr.innerHTML=`<td class="pc c-city">${r.pc}</td><td>${r.prov||''}</td><td>${esc(r.old)}</td><td>${esc(r.new)}</td><td>${badge}</td><td>${r.fsa||''}</td>`;fr.appendChild(tr);}
+    tb.appendChild(fr);shown=end;$('#city-more').style.display=shown<filtered.length?'block':'none';}
+  $('#city-search').oninput=apply;provSel.onchange=apply;subSel.onchange=apply;$('#city-more').onclick=more;apply();
 }
 
-function renderRemovedRow(r) {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td class="pc change-removed">${r.pc}</td><td>${r.prov}</td><td>${r.city}</td><td>${r.fsa}</td><td>${r.date}</td>`;
-  return tr;
-}
-
-function renderAddedRow(r) {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `<td class="pc change-added">${r.pc}</td><td>${r.prov}</td><td>${r.city}</td><td>${r.fsa}</td><td>${r.date}</td>`;
-  return tr;
-}
-
-function renderCityRow(r) {
-  const tr = document.createElement('tr');
-  const technical = ['encoding','accent_normalization','punctuation','spacing','abbreviation'];
-  const group = technical.includes(r.sub) ? 'technical' : 'real';
-  const subBadge = r.sub ? `<span class="sub-badge sub-${group}">${r.sub}</span>` : '';
-  tr.innerHTML = `<td class="pc change-city">${r.pc}</td><td>${r.prov}</td><td>${r.old}</td><td>${r.new}</td><td>${subBadge}</td><td>${r.fsa}</td><td>${r.date}</td>`;
-  return tr;
-}
-
-function setupCityTable() {
-  const data = state.cityChanged;
-  const name = 'city';
-
-  // Province filter
-  const provinces = [...new Set(data.map(r => r.prov).filter(Boolean))].sort();
-  const provSelect = document.getElementById('city-prov');
-  provinces.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p; opt.textContent = p;
-    provSelect.appendChild(opt);
-  });
-
-  const subtypeSelect = document.getElementById('city-subtype');
-
-  let shown = 0;
-  let filtered = data;
-
-  const technicalSubs = ['encoding','accent_normalization','punctuation','spacing','abbreviation'];
-
-  function applyFilter() {
-    const q = document.getElementById('city-search').value.toLowerCase();
-    const prov = provSelect.value;
-    const sub = subtypeSelect.value;
-    filtered = data.filter(r => {
-      if (prov && r.prov !== prov) return false;
-      if (q && !['pc','old','new','prov','fsa'].some(f => (r[f] || '').toLowerCase().includes(q))) return false;
-      if (sub === 'substantive_only') {
-        if (technicalSubs.includes(r.sub)) return false;
-      } else if (sub && r.sub !== sub) {
-        return false;
-      }
-      return true;
-    });
-    shown = 0;
-    document.getElementById('city-body').innerHTML = '';
-    document.getElementById('city-count').textContent = fmt(filtered.length) + ' records';
-    loadMore();
-  }
-
-  function loadMore() {
-    const tbody = document.getElementById('city-body');
-    const end = Math.min(shown + PAGE_SIZE, filtered.length);
-    const frag = document.createDocumentFragment();
-    for (let i = shown; i < end; i++) {
-      frag.appendChild(renderCityRow(filtered[i]));
-    }
-    tbody.appendChild(frag);
-    shown = end;
-    document.getElementById('city-more').style.display = shown < filtered.length ? 'block' : 'none';
-  }
-
-  document.getElementById('city-search').addEventListener('input', applyFilter);
-  provSelect.addEventListener('change', applyFilter);
-  subtypeSelect.addEventListener('change', applyFilter);
-  document.getElementById('city-more').addEventListener('click', loadMore);
-
-  applyFilter();
-}
-
-function fmt(n) { return (n || 0).toLocaleString(); }
-
-loadData();
+boot();
 </script>
 </body>
 </html>

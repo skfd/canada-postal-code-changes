@@ -1,0 +1,5 @@
+[
+  {"big": "92%", "tone": "warn", "text": "of the 163,167 “city changes” are <b>encoding fixes</b>, not real renames — only 12,074 are genuine boundary or rename changes."},
+  {"big": "BC › QC", "tone": "neutral", "text": "strip the encoding noise and <b>British Columbia</b> (3,638) leads real renames, narrowly ahead of Quebec (3,600) — the raw “89% Quebec” story flips."},
+  {"big": "+52,427", "tone": "good", "text": "postal codes appeared in the <b>Feb 2026</b> refresh alone — the largest single expansion, carrying 8,088 genuine boundary/rename changes."}
+]
