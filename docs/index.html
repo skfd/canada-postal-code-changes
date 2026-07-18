@@ -182,6 +182,7 @@ td.pc{font-family:var(--mono);letter-spacing:.04em}
     <button class="tab" data-view="added">Added</button>
     <button class="tab" data-view="removed">Removed</button>
     <button class="tab" data-view="city">City changes</button>
+    <a class="tab" href="fsa.html">FSA history →</a>
   </div>
 
   <!-- OVERVIEW -->
@@ -339,6 +340,7 @@ $('#themeBtn').onclick=()=>{
 /* tabs (lazy-load heavy tables) */
 document.querySelectorAll('.tab').forEach(btn=>{
   btn.onclick=()=>{
+    if(!btn.dataset.view)return; // plain link (e.g. FSA history) — let it navigate
     document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     btn.classList.add('active');
