@@ -251,7 +251,8 @@ function render(snaps){
       <div class="geonote"><b>Note:</b> FSAs untouched in this release stay grey. Boundaries are StatCan forward sortation areas; hover any area for its counts.</div></div></div>
     ${explorerHTML()}
     <div class="foot">Figures &amp; examples exact from the NAR merged dataset · interpretive reasoning is analysis, not official Canada Post statements ·
-      <a href="index.html">← all snapshots</a></div>`;
+      <a href="index.html">← all snapshots</a> ·
+      <a href="https://github.com/skfd/canada-postal-code-changes" target="_blank" rel="noopener">Source on GitHub</a></div>`;
 
   $('#themeBtn').onclick=()=>{const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
     document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');renderMap(curMetric);};
