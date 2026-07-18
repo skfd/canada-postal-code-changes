@@ -103,9 +103,15 @@ a{color:var(--accent);text-decoration:none}
 
 .geowrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
 .geowrap .cap{font-size:.82rem;color:var(--faint);margin-bottom:6px}
-svg.map{width:100%;height:auto;display:block;background:var(--surface2);border-radius:10px}
+.mapview{position:relative}
+svg.map{width:100%;height:auto;display:block;background:var(--surface2);border-radius:10px;touch-action:none;cursor:grab}
+svg.map.grabbing{cursor:grabbing}
 svg.map path{stroke:var(--surface2);stroke-width:.3;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 svg.map path:hover{stroke:var(--ink);stroke-width:1}
+.zoomctl{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:5px;z-index:5}
+.zoomctl button{width:30px;height:30px;padding:0;background:var(--surface);border:1px solid var(--border);color:var(--ink);border-radius:8px;cursor:pointer;font-size:1.1rem;line-height:1;box-shadow:var(--shadow);font-family:inherit}
+.zoomctl button:hover{border-color:var(--accent);color:var(--accent)}
+.maphint{position:absolute;right:10px;bottom:10px;font-size:.7rem;color:var(--faint);background:color-mix(in srgb,var(--surface) 82%,transparent);padding:3px 8px;border-radius:6px;pointer-events:none}
 .ramp{height:12px;border-radius:6px;margin:12px 0 4px}
 .ramp-lbl{display:flex;justify-content:space-between;font-size:.75rem;color:var(--faint)}
 .geonote{font-size:.8rem;color:var(--faint);margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
@@ -237,15 +243,18 @@ function render(snaps){
     <div class="section"><div class="sec-head"><h2>Where the changes happened</h2><span class="hint">FSAs shaded by this release's changes</span></div>
       <div class="geowrap">
       <div class="seg" id="mapToggle" style="margin-bottom:12px">
-        <button data-metric="total" class="on">All changes</button>
+        <button data-metric="real" class="on">All real</button>
         <button data-metric="added">Added</button>
         <button data-metric="removed">Removed</button>
-        <button data-metric="creal">Real renames</button>
-        <button data-metric="csd">Municipality moves</button>
-        <button data-metric="cnoise">Encoding noise</button>
+        <button data-metric="creal">Rename</button>
+        <button data-metric="csd">Municipality</button>
       </div>
       <div class="cap" id="mapCaption">Loading map…</div>
-      <svg class="map" id="map" viewBox="0 0 1000 620" role="img" aria-label="Choropleth of this release's changes by FSA"></svg>
+      <div class="mapview">
+        <svg class="map" id="map" viewBox="0 0 1000 620" role="img" aria-label="Choropleth of this release's changes by FSA"></svg>
+        <div class="zoomctl"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zreset" title="Reset view" aria-label="Reset view" style="font-size:.9rem">⟲</button></div>
+        <div class="maphint">scroll to zoom · drag to pan</div>
+      </div>
       <div class="ramp" id="ramp"></div>
       <div class="ramp-lbl"><span>fewer</span><span id="rampMax">more</span></div>
       <div class="geonote"><b>Note:</b> FSAs untouched in this release stay grey. Boundaries are StatCan forward sortation areas; hover any area for its counts.</div></div></div>
@@ -343,14 +352,15 @@ $('#scrim').onclick=closeDrawer;
 /* FSA choropleth of this release's changes — same projection as the overview map. */
 const tt=$('#tt');
 const METRIC_META={
-  total:{hue:[125,149,255],label:'All recorded changes this release, by FSA'},
+  real:{hue:[125,149,255],label:'All real changes this release — encoding noise excluded, by FSA'},
   added:{hue:[66,211,146],label:'Postal codes added, by FSA'},
   removed:{hue:[246,112,122],label:'Postal codes removed, by FSA'},
   creal:{hue:[245,183,61],label:'Real city renames, by FSA'},
-  csd:{hue:[176,131,240],label:'Municipality (CSD) reassignments, by FSA'},
-  cnoise:{hue:[118,124,148],label:'Encoding / mojibake noise, by FSA'}};
+  csd:{hue:[176,131,240],label:'Municipality (CSD) reassignments, by FSA'}};
+// value of an FSA record for a metric; 'real' sums the genuine change types, ignoring encoding noise
+const mval=(c,m)=>m==='real'?((c.added||0)+(c.removed||0)+(c.csd||0)+(c.creal||0)):(c[m]||0);
 const LONC=-96,MAPW=1000,MAPH=620,MAPPAD=16;
-let PATHS=[],curMetric='total';
+let PATHS=[],curMetric='real';
 
 function lerp(a,b,t){return Math.round(a+(b-a)*t);}
 function color(t,hue){const s=cssv('--surface3');
@@ -386,17 +396,32 @@ async function loadMap(){
   catch(e){const c=$('#mapCaption');if(c)c.textContent='Map unavailable.';}
 }
 
+/* zoom / pan — content lives in a <g> we transform; strokes are non-scaling */
+const view={k:1,tx:0,ty:0};
+const tf=()=>`translate(${view.tx.toFixed(2)} ${view.ty.toFixed(2)}) scale(${view.k.toFixed(4)})`;
+function applyView(){const g=$('#map g');if(g)g.setAttribute('transform',tf());}
+function clampPan(){const mx=(1-view.k)*MAPW,my=(1-view.k)*MAPH;
+  view.tx=Math.min(0,Math.max(mx,view.tx));view.ty=Math.min(0,Math.max(my,view.ty));}
+function svgPt(cx,cy){const r=$('#map').getBoundingClientRect();
+  return [(cx-r.left)/r.width*MAPW,(cy-r.top)/r.height*MAPH];}
+function zoomAt(f,cx,cy){const p=svgPt(cx,cy),k2=Math.min(200,Math.max(1,view.k*f));
+  if(k2===view.k)return;
+  view.tx=p[0]-(p[0]-view.tx)*(k2/view.k);view.ty=p[1]-(p[1]-view.ty)*(k2/view.k);
+  view.k=k2;clampPan();applyView();}
+function zoomC(f){const r=$('#map').getBoundingClientRect();zoomAt(f,r.left+r.width/2,r.top+r.height/2);}
+
 function renderMap(metric){
   curMetric=metric;const svg=$('#map');if(!svg||!PATHS.length)return;
   const meta=METRIC_META[metric],bf=DETAIL.fsa||{};
-  const max=Math.max(...Object.values(bf).map(c=>c[metric]||0),1),lmax=Math.log(max+1);
-  const grey=cssv('--surface3');svg.innerHTML='';
+  const max=Math.max(...Object.values(bf).map(c=>mval(c,metric)),1),lmax=Math.log(max+1);
+  const grey=cssv('--surface3');
+  const g=mk('g',{transform:tf()});
   const frag=document.createDocumentFragment();
   PATHS.forEach(p=>{
-    const c=bf[p.fsa],v=c?(c[metric]||0):0;
+    const c=bf[p.fsa],v=c?mval(c,metric):0;
     frag.appendChild(mk('path',{d:p.d,'data-fsa':p.fsa,fill:v>0?color(Math.log(v+1)/lmax,meta.hue):grey}));
   });
-  svg.appendChild(frag);
+  g.appendChild(frag);svg.innerHTML='';svg.appendChild(g);
   $('#mapCaption').textContent=meta.label;
   const h=meta.hue;$('#ramp').style.background=`linear-gradient(90deg,${grey},rgb(${h[0]},${h[1]},${h[2]}))`;
   $('#rampMax').textContent=fmt(max);
@@ -407,9 +432,19 @@ function wireMapTT(){
   svg.addEventListener('mousemove',e=>{
     const t=e.target;if(t.tagName!=='path'){tt.style.opacity=0;return;}
     const fsa=t.getAttribute('data-fsa'),c=(DETAIL.fsa||{})[fsa]||{};
-    tt.innerHTML=`<b>${fsa}</b> · ${fmt(c.total)} changes<br>+${fmt(c.added)} added · −${fmt(c.removed)} removed`;
+    tt.innerHTML=`<b>${fsa}</b> · ${fmt(mval(c,'real'))} real changes<br>+${fmt(c.added)} added · −${fmt(c.removed)} removed<br>${fmt(c.creal)} renames · ${fmt(c.csd)} muni moves`;
     tt.style.opacity=1;tt.style.left=(e.clientX+12)+'px';tt.style.top=(e.clientY+12)+'px';});
   svg.addEventListener('mouseleave',()=>tt.style.opacity=0);
+  svg.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.deltaY<0?1.2:1/1.2,e.clientX,e.clientY);},{passive:false});
+  let pan=null;
+  svg.addEventListener('pointerdown',e=>{pan={x:e.clientX,y:e.clientY,tx:view.tx,ty:view.ty};svg.setPointerCapture(e.pointerId);svg.classList.add('grabbing');tt.style.opacity=0;});
+  svg.addEventListener('pointermove',e=>{if(!pan)return;const r=svg.getBoundingClientRect();
+    view.tx=pan.tx+(e.clientX-pan.x)*(MAPW/r.width);view.ty=pan.ty+(e.clientY-pan.y)*(MAPH/r.height);
+    clampPan();applyView();});
+  const end=()=>{pan=null;svg.classList.remove('grabbing');};
+  svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
+  $('#zin').onclick=()=>zoomC(1.5);$('#zout').onclick=()=>zoomC(1/1.5);
+  $('#zreset').onclick=()=>{view.k=1;view.tx=0;view.ty=0;applyView();};
 }
 
 boot();
