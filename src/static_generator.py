@@ -53,6 +53,7 @@ def generate_all() -> None:
     _generate_added(conn)
     _generate_removed(conn)
     _generate_city_changed(conn)
+    _generate_map_points(conn)
     _generate_snapshot_details(conn, snapshots)
 
     conn.close()
@@ -279,6 +280,50 @@ def _generate_city_changed(conn) -> None:
              "old": r["old_city"] or "", "new": r["new_city"] or "", "sub": r["sub"] or ""}
             for r in rows]
     _write_json("city_changed.json", data)
+
+
+def _generate_map_points(conn) -> None:
+    """Per-code points for the map's zoom-in pin layer, grouped by FSA.
+
+    Each real change (added/removed/real-rename/csd-move) gets one point at its
+    true lat/lon so users can zoom in and see exactly which codes changed.
+    Encoding noise is excluded. Output: {fsa: {a|r|n|m: [[lon, lat, code], ...]}}.
+    """
+    # Coordinate lookup per postal code — geonames is precise per code; fill gaps from merged.
+    coords: dict[str, tuple[float, float]] = {}
+    for src in ("geonames", "merged"):
+        for r in conn.execute(
+            "SELECT postal_code AS pc, latitude AS lat, longitude AS lon "
+            "FROM postal_code_snapshots WHERE source_type = ? AND latitude IS NOT NULL",
+            (src,),
+        ):
+            coords.setdefault(r["pc"], (r["lon"], r["lat"]))
+
+    bucket = {"added": "a", "removed": "r", "csd_changed": "m"}
+    out: dict[str, dict[str, list]] = {}
+    placed = missing = 0
+    for r in conn.execute(
+        f"""
+        SELECT DISTINCT postal_code AS pc, change_type AS ct
+        FROM postal_code_changes
+        WHERE source_type = 'merged' AND (
+              change_type IN ('added', 'removed', 'csd_changed')
+              OR (change_type = 'city_changed' AND {_REAL_SQL}))
+        """
+    ):
+        c = coords.get(r["pc"])
+        if not c:
+            missing += 1
+            continue
+        b = bucket.get(r["ct"], "n")  # city_changed real -> 'n'
+        fsa = r["pc"][:3]
+        out.setdefault(fsa, {}).setdefault(b, []).append(
+            [round(c[0], 4), round(c[1], 4), r["pc"]]
+        )
+        placed += 1
+
+    _write_json("map_points.json", out)
+    logger.info("map_points: %d points placed, %d without coordinates", placed, missing)
 
 
 # --- per-snapshot deep-dive data -------------------------------------------------
