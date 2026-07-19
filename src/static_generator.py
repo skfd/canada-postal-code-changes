@@ -53,7 +53,7 @@ def generate_all() -> None:
     _generate_added(conn)
     _generate_removed(conn)
     _generate_city_changed(conn)
-    _generate_map_points(conn)
+    _generate_map_points(conn, snapshots)
     _generate_snapshot_details(conn, snapshots)
 
     conn.close()
@@ -282,13 +282,19 @@ def _generate_city_changed(conn) -> None:
     _write_json("city_changed.json", data)
 
 
-def _generate_map_points(conn) -> None:
+def _generate_map_points(conn, snapshots: list[dict]) -> None:
     """Per-code points for the map's zoom-in pin layer, grouped by FSA.
 
     Each real change (added/removed/real-rename/csd-move) gets one point at its
     true lat/lon so users can zoom in and see exactly which codes changed.
-    Encoding noise is excluded. Output: {fsa: {a|r|n|m: [[lon, lat, code], ...]}}.
+    Encoding noise is excluded.
+
+    Writes an all-time aggregate (map_points.json, used by the overview map) plus
+    one file per transition (map_points/<date>.json, used by that snapshot's map).
+    Output shape in every file: {fsa: {a|r|n|m: [[lon, lat, code], ...]}}.
     """
+    (STATIC_DATA_DIR / "map_points").mkdir(parents=True, exist_ok=True)
+
     # Coordinate lookup per postal code — geonames is precise per code; fill gaps from merged.
     coords: dict[str, tuple[float, float]] = {}
     for src in ("geonames", "merged"):
@@ -300,7 +306,20 @@ def _generate_map_points(conn) -> None:
             coords.setdefault(r["pc"], (r["lon"], r["lat"]))
 
     bucket = {"added": "a", "removed": "r", "csd_changed": "m"}
-    out: dict[str, dict[str, list]] = {}
+
+    def _place(out: dict, pc: str, ct: str) -> bool:
+        """Append pc's point to `out` under its FSA/bucket; False if no coords."""
+        c = coords.get(pc)
+        if not c:
+            return False
+        b = bucket.get(ct, "n")  # city_changed real -> 'n'
+        out.setdefault(pc[:3], {}).setdefault(b, []).append(
+            [round(c[0], 4), round(c[1], 4), pc]
+        )
+        return True
+
+    # All-time aggregate for the overview map (deduped across snapshots).
+    agg: dict[str, dict[str, list]] = {}
     placed = missing = 0
     for r in conn.execute(
         f"""
@@ -311,18 +330,31 @@ def _generate_map_points(conn) -> None:
               OR (change_type = 'city_changed' AND {_REAL_SQL}))
         """
     ):
-        c = coords.get(r["pc"])
-        if not c:
+        if _place(agg, r["pc"], r["ct"]):
+            placed += 1
+        else:
             missing += 1
-            continue
-        b = bucket.get(r["ct"], "n")  # city_changed real -> 'n'
-        fsa = r["pc"][:3]
-        out.setdefault(fsa, {}).setdefault(b, []).append(
-            [round(c[0], 4), round(c[1], 4), r["pc"]]
-        )
-        placed += 1
+    _write_json("map_points.json", agg)
 
-    _write_json("map_points.json", out)
+    # Per-snapshot points, filtered to that transition's changes.
+    for s in snapshots:
+        if s.get("baseline"):
+            continue
+        after = s["date"]
+        out: dict[str, dict[str, list]] = {}
+        for r in conn.execute(
+            f"""
+            SELECT postal_code AS pc, change_type AS ct
+            FROM postal_code_changes
+            WHERE source_type = 'merged' AND snapshot_after = ? AND (
+                  change_type IN ('added', 'removed', 'csd_changed')
+                  OR (change_type = 'city_changed' AND {_REAL_SQL}))
+            """,
+            (after,),
+        ):
+            _place(out, r["pc"], r["ct"])
+        _write_json(f"map_points/{after}.json", out)
+
     logger.info("map_points: %d points placed, %d without coordinates", placed, missing)
 
 
