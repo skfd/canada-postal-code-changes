@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS postal_code_changes (
     created_at      TEXT DEFAULT (datetime('now'))
 );
 
+CREATE INDEX IF NOT EXISTS idx_changes_pc
+    ON postal_code_changes(postal_code);
 CREATE INDEX IF NOT EXISTS idx_changes_type
     ON postal_code_changes(change_type);
 CREATE INDEX IF NOT EXISTS idx_changes_subtype

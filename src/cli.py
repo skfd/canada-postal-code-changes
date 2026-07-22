@@ -635,6 +635,26 @@ def classify() -> None:
         click.echo(f"  {subtype:25s} {count:>8,}")
 
 
+# ── reintroductions ───────────────────────────────────────────────────────────
+
+
+@cli.command()
+@click.option("--source", default="nar", help="Source type (nar, merged, geocoder, geonames)")
+def reintroductions(source: str) -> None:
+    """Label removals that reverse and the adds that reintroduce the code."""
+    from src.differ import label_reintroductions
+
+    start_time = time.time()
+    db.init_db()
+    click.echo(f"Labelling reintroductions for {source} ...")
+    counts = label_reintroductions(source)
+    duration = time.time() - start_time
+    click.echo(
+        f"  {counts['temporary']:,} removals labelled 'temporary', "
+        f"{counts['reintroduced']:,} adds labelled 'reintroduced' in {duration:.2f}s."
+    )
+
+
 # ── generate-static ───────────────────────────────────────────────────────────
 
 

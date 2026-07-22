@@ -210,6 +210,69 @@ def store_changes(changes: pd.DataFrame) -> int:
     return len(changes)
 
 
+def label_reintroductions(source_type: str = "nar") -> dict[str, int]:
+    """Mark removals that later reverse, and the re-additions that reverse them.
+
+    Pairs are diffed independently, so a code that drops out and comes back
+    produces an unlinked `removed` and `added`. Roughly half of all removals are
+    of this kind, which makes a bare "removed" label overstate permanence. This
+    pass runs over the whole change log for a source and sets
+    `change_subtype = 'temporary'` on such removals and `'reintroduced'` on the
+    later add. Idempotent — safe to re-run.
+
+    Returns {'temporary': n, 'reintroduced': n}.
+    """
+    conn = db.get_connection()
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_changes_pc ON postal_code_changes(postal_code)"
+    )
+    conn.execute(
+        "UPDATE postal_code_changes SET change_subtype = NULL "
+        "WHERE source_type = ? AND change_type IN ('added', 'removed')",
+        (source_type,),
+    )
+
+    # A removal reverses if the same code is added again at a later snapshot.
+    temporary = conn.execute(
+        """
+        UPDATE postal_code_changes AS c SET change_subtype = 'temporary'
+        WHERE c.source_type = ? AND c.change_type = 'removed'
+          AND EXISTS (
+              SELECT 1 FROM postal_code_changes a
+              WHERE a.source_type = c.source_type
+                AND a.postal_code = c.postal_code
+                AND a.change_type = 'added'
+                AND a.snapshot_after > c.snapshot_after
+          )
+        """,
+        (source_type,),
+    ).rowcount
+
+    # An add is a reintroduction if the code was removed at an earlier snapshot.
+    reintroduced = conn.execute(
+        """
+        UPDATE postal_code_changes AS c SET change_subtype = 'reintroduced'
+        WHERE c.source_type = ? AND c.change_type = 'added'
+          AND EXISTS (
+              SELECT 1 FROM postal_code_changes r
+              WHERE r.source_type = c.source_type
+                AND r.postal_code = c.postal_code
+                AND r.change_type = 'removed'
+                AND r.snapshot_after < c.snapshot_after
+          )
+        """,
+        (source_type,),
+    ).rowcount
+
+    conn.commit()
+    conn.close()
+    logger.info(
+        "Reintroductions %s: %d removals are temporary, %d adds are reintroductions",
+        source_type, temporary, reintroduced,
+    )
+    return {"temporary": temporary, "reintroduced": reintroduced}
+
+
 def build_merged_snapshots() -> list[str]:
     """Build merged snapshots combining all sources at each time point.
 
@@ -373,5 +436,7 @@ def diff_all_pairs(source_type: str = "nar") -> dict[str, int]:
         count = store_changes(changes)
         results[label] = count
         logger.info("  %s: %d changes", label, count)
+
+    label_reintroductions(source_type)
 
     return results
