@@ -14,6 +14,7 @@ import logging
 from pathlib import Path
 
 from src import db
+from src.classifier import classify_city_change
 from src.config import PROVINCE_ABBR_TO_NAME
 
 logger = logging.getLogger(__name__)
@@ -44,14 +45,14 @@ def generate_all() -> None:
 
     conn = db.get_connection()
 
-    snapshots = _snapshot_transitions(conn)
+    removed = _generate_removed(conn)
+    snapshots = _snapshot_transitions(conn, removed)
 
-    _generate_summary(conn)
+    _generate_summary(conn, removed)
     _generate_snapshots(conn, snapshots)
     _generate_by_province(conn)
     _generate_by_fsa(conn)
     _generate_added(conn)
-    _generate_removed(conn)
     _generate_city_changed(conn)
     _generate_map_points(conn, snapshots)
     _generate_snapshot_details(conn, snapshots)
@@ -76,10 +77,15 @@ def _active_by_snapshot(conn) -> dict[str, int]:
     return {r["snapshot_date"]: r["n"] for r in rows}
 
 
-def _snapshot_transitions(conn) -> list[dict]:
+def _snapshot_transitions(conn, removed: list[dict]) -> list[dict]:
     """One record per snapshot transition (skips the baseline snapshot)."""
     active = _active_by_snapshot(conn)
     dates = list(active.keys())
+
+    returned: dict[str, int] = {}
+    for r in removed:
+        if "back" in r:
+            returned[r["date"]] = returned.get(r["date"], 0) + 1
 
     rows = conn.execute(
         f"""
@@ -108,6 +114,7 @@ def _snapshot_transitions(conn) -> list[dict]:
             "active_after": active.get(after, 0),
             "added": r["added"] or 0,
             "removed": r["removed"] or 0,
+            "removed_returned": returned.get(after, 0),
             "csd_changed": r["csd_changed"] or 0,
             "city_real": r["city_real"] or 0,
             "city_noise": r["city_noise"] or 0,
@@ -119,13 +126,13 @@ def _snapshot_transitions(conn) -> list[dict]:
             "date": dates[0], "before": None, "label": _label(dates[0]),
             "range": _label(dates[0]), "active_before": None,
             "active_after": active[dates[0]], "baseline": True,
-            "added": 0, "removed": 0, "csd_changed": 0,
+            "added": 0, "removed": 0, "removed_returned": 0, "csd_changed": 0,
             "city_real": 0, "city_noise": 0,
         })
     return out
 
 
-def _generate_summary(conn) -> None:
+def _generate_summary(conn, removed: list[dict]) -> None:
     """Overall stats — real numbers lead, raw total kept as a secondary fact."""
     row = conn.execute(
         "SELECT COUNT(*) AS total, SUM(is_active) AS active FROM postal_code_summary"
@@ -164,6 +171,7 @@ def _generate_summary(conn) -> None:
         "net_growth": net,
         "added": counts["added"] or 0,
         "removed": counts["removed"] or 0,
+        "removed_returned": sum(1 for r in removed if "back" in r),
         "csd_changed": counts["csd_changed"] or 0,
         "city_total": counts["city_total"] or 0,
         "city_real": counts["city_real"] or 0,
@@ -250,8 +258,25 @@ def _generate_added(conn) -> None:
     _write_json("added.json", data)
 
 
-def _generate_removed(conn) -> None:
-    """All removed postal codes."""
+def _return_dates(conn) -> dict[str, list[str]]:
+    """postal_code -> NAR snapshots where the code came back after a removal.
+
+    Measured on the NAR series only. The merged series unions in other sources,
+    so a code missing from NAR but present in GeoNames looks like a return when
+    that source first joins — a coverage artifact, not a Canada Post reissue.
+    """
+    returns: dict[str, list[str]] = {}
+    for r in conn.execute(
+        "SELECT postal_code, snapshot_after FROM postal_code_changes "
+        "WHERE source_type = 'nar' AND change_subtype = 'reintroduced' "
+        "ORDER BY snapshot_after"
+    ):
+        returns.setdefault(r["postal_code"], []).append(r["snapshot_after"])
+    return returns
+
+
+def _generate_removed(conn) -> list[dict]:
+    """All removed postal codes, flagged with the date any of them came back."""
     rows = conn.execute(
         "SELECT c.postal_code AS pc, c.snapshot_after AS date, "
         "  c.province_abbr AS prov, c.fsa, s.city_name AS city "
@@ -261,9 +286,18 @@ def _generate_removed(conn) -> None:
         "ORDER BY c.snapshot_after, c.postal_code"
     ).fetchall()
 
-    data = [{"pc": r["pc"], "date": r["date"], "prov": r["prov"],
-             "city": r["city"] or "", "fsa": r["fsa"]} for r in rows]
+    returns = _return_dates(conn)
+
+    data = []
+    for r in rows:
+        rec = {"pc": r["pc"], "date": r["date"], "prov": r["prov"],
+               "city": r["city"] or "", "fsa": r["fsa"]}
+        back = next((d for d in returns.get(r["pc"], []) if d > r["date"]), None)
+        if back:
+            rec["back"] = back
+        data.append(rec)
     _write_json("removed.json", data)
+    return data
 
 
 def _generate_city_changed(conn) -> None:
@@ -287,11 +321,17 @@ def _generate_map_points(conn, snapshots: list[dict]) -> None:
 
     Each real change (added/removed/real-rename/csd-move) gets one point at its
     true lat/lon so users can zoom in and see exactly which codes changed.
-    Encoding noise is excluded.
+    Encoding noise is excluded — including for csd (municipality) moves, where
+    only genuine A->B reassignments are kept (mojibake/spacing fixes and
+    null<->name transitions are dropped).
+
+    Each point carries the province plus the change's old/new place names so the
+    map can show a meaningful hover. For added/removed the place name is looked
+    up from the after/before snapshot (the change row itself has none).
 
     Writes an all-time aggregate (map_points.json, used by the overview map) plus
     one file per transition (map_points/<date>.json, used by that snapshot's map).
-    Output shape in every file: {fsa: {a|r|n|m: [[lon, lat, code], ...]}}.
+    Output shape in every file: {fsa: {a|r|n|m: [[lon, lat, code, prov, old, new], ...]}}.
     """
     (STATIC_DATA_DIR / "map_points").mkdir(parents=True, exist_ok=True)
 
@@ -305,32 +345,82 @@ def _generate_map_points(conn, snapshots: list[dict]) -> None:
         ):
             coords.setdefault(r["pc"], (r["lon"], r["lat"]))
 
+    # City name per (postal code) for a given merged snapshot date, cached — used
+    # to name added (after date) and removed (before date) codes.
+    city_cache: dict[str, dict[str, str]] = {}
+
+    def _cities(date: str) -> dict[str, str]:
+        if date not in city_cache:
+            city_cache[date] = {
+                r["pc"]: r["c"]
+                for r in conn.execute(
+                    "SELECT postal_code AS pc, city_name AS c "
+                    "FROM postal_code_snapshots "
+                    "WHERE source_type = 'merged' AND snapshot_date = ? "
+                    "AND city_name IS NOT NULL AND city_name != ''",
+                    (date,),
+                )
+            }
+        return city_cache[date]
+
     bucket = {"added": "a", "removed": "r", "csd_changed": "m"}
 
-    def _place(out: dict, pc: str, ct: str) -> bool:
-        """Append pc's point to `out` under its FSA/bucket; False if no coords."""
-        c = coords.get(pc)
+    def _values(row) -> tuple[str, str] | None:
+        """Resolve (old, new) place names for a change row, or None to skip it.
+
+        added   -> (None, city@after);  removed -> (city@before, None)
+        rename  -> (old_city, new_city) straight from the row
+        csd move-> (old_muni, new_muni) but only genuine moves survive
+        """
+        ct, pc = row["ct"], row["pc"]
+        if ct == "added":
+            return None, _cities(row["sa"]).get(pc)
+        if ct == "removed":
+            return _cities(row["sb"]).get(pc), None
+        if ct == "city_changed":
+            return row["ov"], row["nv"]
+        # csd_changed: drop noise (encoding/spacing) and null<->name populate/clear
+        ov, nv = row["ov"], row["nv"]
+        if not ov or not nv:
+            return None
+        if classify_city_change(ov, nv) not in REAL_SUBTYPES:
+            return None
+        return ov, nv
+
+    def _place(out: dict, row) -> bool:
+        """Append row's point to `out` under its FSA/bucket; False if skipped/no coords."""
+        c = coords.get(row["pc"])
         if not c:
             return False
-        b = bucket.get(ct, "n")  # city_changed real -> 'n'
-        out.setdefault(pc[:3], {}).setdefault(b, []).append(
-            [round(c[0], 4), round(c[1], 4), pc]
+        vals = _values(row)
+        if vals is None:  # a filtered-out csd change
+            return False
+        old, new = vals
+        b = bucket.get(row["ct"], "n")  # city_changed real -> 'n'
+        out.setdefault(row["pc"][:3], {}).setdefault(b, []).append(
+            [round(c[0], 4), round(c[1], 4), row["pc"], row["prov"], old, new]
         )
         return True
 
-    # All-time aggregate for the overview map (deduped across snapshots).
-    agg: dict[str, dict[str, list]] = {}
-    placed = missing = 0
-    for r in conn.execute(
-        f"""
-        SELECT DISTINCT postal_code AS pc, change_type AS ct
+    select = f"""
+        SELECT postal_code AS pc, change_type AS ct, province_abbr AS prov,
+               old_value AS ov, new_value AS nv,
+               snapshot_before AS sb, snapshot_after AS sa
         FROM postal_code_changes
-        WHERE source_type = 'merged' AND (
+        WHERE source_type = 'merged' AND {{extra}} (
               change_type IN ('added', 'removed', 'csd_changed')
               OR (change_type = 'city_changed' AND {_REAL_SQL}))
         """
-    ):
-        if _place(agg, r["pc"], r["ct"]):
+
+    # All-time aggregate for the overview map. Ordered by date so that, for a code
+    # that changed the same way more than once, the most recent instance wins.
+    agg: dict[str, dict[str, list]] = {}
+    latest: dict[tuple[str, str], object] = {}
+    for r in conn.execute(select.format(extra="") + " ORDER BY snapshot_after ASC"):
+        latest[(r["pc"], r["ct"])] = r
+    placed = missing = 0
+    for r in latest.values():
+        if _place(agg, r):
             placed += 1
         else:
             missing += 1
@@ -343,19 +433,12 @@ def _generate_map_points(conn, snapshots: list[dict]) -> None:
         after = s["date"]
         out: dict[str, dict[str, list]] = {}
         for r in conn.execute(
-            f"""
-            SELECT postal_code AS pc, change_type AS ct
-            FROM postal_code_changes
-            WHERE source_type = 'merged' AND snapshot_after = ? AND (
-                  change_type IN ('added', 'removed', 'csd_changed')
-                  OR (change_type = 'city_changed' AND {_REAL_SQL}))
-            """,
-            (after,),
+            select.format(extra="snapshot_after = ? AND"), (after,)
         ):
-            _place(out, r["pc"], r["ct"])
+            _place(out, r)
         _write_json(f"map_points/{after}.json", out)
 
-    logger.info("map_points: %d points placed, %d without coordinates", placed, missing)
+    logger.info("map_points: %d points placed, %d skipped/without coordinates", placed, missing)
 
 
 # --- per-snapshot deep-dive data -------------------------------------------------

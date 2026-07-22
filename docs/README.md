@@ -21,7 +21,7 @@ This creates the following JSON files in `data/`:
 - `timeline.json` - Changes by time period
 - `by_province.json` - Changes by province
 - `added.json` - All added postal codes
-- `removed.json` - All removed postal codes
+- `removed.json` - All removed postal codes (`back` = the snapshot a code returned in, if it did)
 - `city_changed.json` - All city name changes
 
 ## GitHub Pages Setup

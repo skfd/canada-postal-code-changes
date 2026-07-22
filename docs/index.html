@@ -6,6 +6,10 @@
 <title>Canadian Postal Code Changes (2022–2026)</title>
 <script data-goatcounter="https://post-codes.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
 :root{
   --bg:#0f1117;--surface:#161925;--surface2:#1e2230;--surface3:#262b3b;
@@ -99,16 +103,22 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .mapmeta{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
 @media(max-width:640px){.mapmeta{grid-template-columns:1fr}}
 .mapview{position:relative}
-svg#map{width:100%;height:auto;display:block;background:var(--surface2);border-radius:10px;touch-action:none;cursor:grab}
-svg#map.grabbing{cursor:grabbing}
-svg#map path{stroke:var(--surface2);stroke-width:.3;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-svg#map path:hover{stroke:var(--ink);stroke-width:1}
-svg#map #pinl circle{stroke:var(--surface);stroke-width:.5;cursor:pointer}
-svg#map #pinl circle:hover{stroke:var(--ink);stroke-width:1.2}
-.zoomctl{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:5px;z-index:5}
-.zoomctl button{width:30px;height:30px;padding:0;background:var(--surface);border:1px solid var(--border);color:var(--ink);border-radius:8px;cursor:pointer;font-size:1.1rem;line-height:1;box-shadow:var(--shadow);font-family:inherit}
-.zoomctl button:hover{border-color:var(--accent);color:var(--accent)}
-.maphint{position:absolute;right:10px;bottom:10px;max-width:calc(100% - 20px);font-size:.7rem;color:var(--faint);background:color-mix(in srgb,var(--surface) 85%,transparent);padding:4px 9px;border-radius:6px;pointer-events:none;text-align:right}
+#map{width:100%;height:min(68vh,560px);min-height:380px;border-radius:10px;background:var(--surface2);z-index:0}
+.leaflet-container{font-family:var(--sans);background:var(--surface2)}
+/* greyscale-ish basemap so it reads as a muted underlay under the choropleth */
+.leaflet-tile-pane{filter:grayscale(1) opacity(.85)}
+@media (prefers-color-scheme:dark){.leaflet-tile-pane{filter:grayscale(1) opacity(.7)}}
+:root[data-theme="dark"] .leaflet-tile-pane{filter:grayscale(1) opacity(.7)}
+:root[data-theme="light"] .leaflet-tile-pane{filter:grayscale(1) opacity(.85)}
+.leaflet-bar a,.leaflet-bar a:hover{background:var(--surface);color:var(--ink);border-color:var(--border)}
+.leaflet-bar a:hover{color:var(--accent)}
+.leaflet-bar{box-shadow:var(--shadow);border-radius:8px}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--surface) 82%,transparent)!important;color:var(--faint)!important;font-size:.62rem}
+.leaflet-control-attribution a{color:var(--dim)!important}
+.leaflet-tooltip.maptt{background:var(--surface3);border:1px solid var(--border2);border-radius:8px;padding:7px 10px;font-size:.78rem;color:var(--ink);box-shadow:var(--shadow);font-family:var(--mono);white-space:nowrap;line-height:1.45}
+.leaflet-tooltip.maptt::before{display:none}
+.pinclus{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font:600 .72rem/1 var(--mono);border:1.5px solid;box-sizing:border-box;cursor:pointer;text-shadow:0 1px 1px rgba(0,0,0,.4)}
+.maphint{position:absolute;right:10px;bottom:10px;max-width:calc(100% - 20px);font-size:.7rem;color:var(--faint);background:color-mix(in srgb,var(--surface) 85%,transparent);padding:4px 9px;border-radius:6px;pointer-events:none;text-align:right;z-index:600}
 .maphint .pk{display:inline-flex;align-items:center;gap:4px;margin-left:8px}
 .maphint .pk i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
 .ramp{height:12px;border-radius:6px;margin:14px 0 6px}
@@ -149,6 +159,10 @@ table.data tbody td{padding:8px 12px;border-bottom:1px solid var(--border)}
 table.data tbody tr:hover{background:var(--surface2)}
 td.pc{font-family:var(--mono);letter-spacing:.04em}
 .c-added{color:var(--green)}.c-removed{color:var(--red)}.c-city{color:var(--amber)}
+.rm-note{font-size:.85rem;color:var(--dim);line-height:1.55;margin:-4px 0 14px;max-width:70ch}
+.rm-note b{color:var(--ink)}
+.back-date{font-family:var(--mono);color:var(--green)}
+.still-gone{color:var(--faint)}
 .sub-badge{display:inline-block;padding:1px 7px;border-radius:20px;font-size:.72rem;font-weight:600}
 .sub-tech{background:rgba(118,124,148,.2);color:var(--noise)}.sub-real{background:rgba(66,211,146,.16);color:var(--green)}
 .load-more{display:block;width:100%;padding:11px;margin-top:8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--accent);cursor:pointer;font:inherit;font-size:.88rem}
@@ -203,9 +217,8 @@ td.pc{font-family:var(--mono);letter-spacing:.04em}
         </div>
         <div class="mapwrap">
           <div class="mapview">
-            <svg id="map" viewBox="0 0 1000 620" role="img" aria-label="Choropleth of change by FSA"></svg>
-            <div class="zoomctl"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zreset" title="Reset view" aria-label="Reset view" style="font-size:.9rem">⟲</button></div>
-            <div class="maphint">scroll to zoom · drag to pan</div>
+            <div id="map" role="img" aria-label="Choropleth of change by FSA over a street basemap"></div>
+            <div class="maphint" id="maphint">scroll to zoom · drag to pan</div>
           </div>
           <div class="mapmeta">
             <div><div class="psub" id="mapCaption"></div>
@@ -264,9 +277,10 @@ td.pc{font-family:var(--mono);letter-spacing:.04em}
 
   <!-- REMOVED -->
   <div class="view" id="view-removed">
-    <div class="sec-head"><h2>Removed postal codes <span class="badge" id="removed-count"></span></h2></div>
+    <div class="sec-head"><h2>Removed postal codes <span class="badge" id="removed-count"></span></h2><span class="hint">removal is often temporary</span></div>
+    <p class="rm-note" id="removed-note"></p>
     <div class="filters"><input type="text" id="removed-search" placeholder="Search postal code or city…"><select id="removed-prov"><option value="">All provinces</option></select></div>
-    <div class="table-wrap"><table class="data"><thead><tr><th>Postal code</th><th>Province</th><th>City</th><th>FSA</th><th>Removed</th></tr></thead><tbody id="removed-body"></tbody></table></div>
+    <div class="table-wrap"><table class="data"><thead><tr><th>Postal code</th><th>Province</th><th>City</th><th>FSA</th><th>Removed</th><th>Came back</th></tr></thead><tbody id="removed-body"></tbody></table></div>
     <button class="load-more" id="removed-more" style="display:none">Load more…</button>
     <div class="loading" id="removed-loading">Loading…</div>
   </div>
@@ -322,8 +336,6 @@ const METRIC_META={
   csd:{hue:[176,131,240],label:'Municipality (CSD) reassignments, by FSA',prov:p=>p.csd_changed||0}};
 // value of an FSA record for a metric; 'real' sums the genuine change types, ignoring encoding noise
 const mval=(c,m)=>m==='real'?((c.added||0)+(c.removed||0)+(c.csd||0)+(c.creal||0)):(c[m]||0);
-const LONC=-96,MAPW=1000,MAPH=620,MAPPAD=16;
-let PATHS=[];  // [{fsa,d}] projected once from the FSA geojson
 const SUBLABEL={encoding:'Encoding / mojibake',boundary:'Boundary shift',substantive:'Substantive rename',
   abbreviation:'Abbreviation',rename:'Rename',accent_normalization:'Accent normalization',punctuation:'Punctuation',spacing:'Spacing'};
 const REAL_SUBS=['boundary','substantive','rename'];
@@ -334,7 +346,7 @@ const state={summary:null,snapshots:null,byProvince:null,byFsa:null,fsaGeo:null,
 $('#themeBtn').onclick=()=>{
   const cur=document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
   document.documentElement.setAttribute('data-theme',cur==='dark'?'light':'dark');
-  renderLine();renderBars();renderMap(state.curMetric);
+  renderLine();renderBars();refreshTheme();
 };
 
 /* tabs (lazy-load heavy tables) */
@@ -351,6 +363,10 @@ document.querySelectorAll('.tab').forEach(btn=>{
   };
 });
 
+// in-page links that jump to a tab (e.g. the hero's "which ones" link)
+document.addEventListener('click',e=>{const a=e.target.closest('[data-goto]');if(!a)return;
+  e.preventDefault();$(`.tab[data-view="${a.dataset.goto}"]`).click();window.scrollTo({top:0,behavior:'smooth'});});
+
 async function boot(){
   const [summary,snapshots,byProvince,findings]=await Promise.all([
     fetch('data/summary.json').then(r=>r.json()),
@@ -359,7 +375,7 @@ async function boot(){
     fetch('data/findings.json').then(r=>r.json()).catch(()=>null),
   ]);
   Object.assign(state,{summary,snapshots,byProvince,findings});
-  renderHero();renderFindings();renderLine();renderBars();renderIndepth();renderSnapshots();
+  renderHero();renderRemovedNote();renderFindings();renderLine();renderBars();renderIndepth();renderSnapshots();
   loadMap();
 }
 
@@ -371,7 +387,27 @@ async function loadMap(){
     fetch('data/fsa.geojson').then(r=>r.json()),
   ]);
   Object.assign(state,{byFsa,fsaGeo});
-  buildPaths(fsaGeo);renderMap(state.curMetric);
+  map=L.map('map',{minZoom:3,maxZoom:18,worldCopyJump:false});
+  map.setView([56.5,-96],4);
+  tileLayer=L.tileLayer(TILE(curTheme()==='dark'?'dark_all':'light_all'),
+    {subdomains:'abcd',maxZoom:19,detectRetina:true,
+     attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'}).addTo(map);
+  /* pins live in a dedicated pane above the choropleth (z 200) but below markers (z 600),
+     so hovering a code pin hits the pin — not the FSA polygon. The pane is pointer-events:none
+     so the gaps between pins fall through and FSA-area hover still works. SVG (not canvas) keeps
+     that per-shape hit-testing. */
+  map.createPane('pins');
+  map.getPane('pins').style.zIndex=450;
+  map.getPane('pins').style.pointerEvents='none';
+  pinR=L.svg({pane:'pins',padding:.5});
+  pinLayer=L.layerGroup().addTo(map);
+  addResetControl();
+  map.on('zoomend',onZoom);
+  map.on('moveend',rebuildPins);
+  geoLayer=L.geoJSON(fsaGeo,{renderer:L.svg(),style:styleFSA,onEachFeature:eachFSA}).addTo(map);
+  map.fitBounds(geoLayer.getBounds(),{padding:[10,10]});
+  renderMap(state.curMetric);
+  setTimeout(()=>map.invalidateSize(),0);
 }
 
 function renderHero(){
@@ -383,11 +419,21 @@ function renderHero(){
     <div class="hcard"><div class="hrow">
       <div><div class="hl">Added</div><div class="hv green num">${fmt(s.added)}</div></div>
       <div><div class="hl">Removed</div><div class="hv red num">${fmt(s.removed)}</div></div></div>
-      <div class="hn">across ${s.snapshots-1} snapshot transitions</div></div>
+      <div class="hn">across ${s.snapshots-1} snapshot transitions — <span class="muted">${fmt(s.removed_returned)} of the removals came back later.
+      <a href="#" data-goto="removed">Which ones →</a></span></div></div>
     <div class="hcard"><div class="hl">Real city renames</div>
       <div class="hv amber num">${fmt(s.city_real)}</div>
       <div class="hn"><span class="muted">${fmt(s.city_total)} raw — ${fmt(s.city_noise)} were encoding fixes.
       <a href="#indepth">See breakdown ↓</a></span></div></div>`;
+}
+
+function renderRemovedNote(){
+  const s=state.summary,back=s.removed_returned,pct=Math.round(100*back/s.removed);
+  $('#removed-note').innerHTML=`Of the <b>${fmt(s.removed)}</b> codes that leave the file, <b>${fmt(back)}</b>
+    — ${pct}% — turn up again in a later release. "Removed" here means <b>absent from this snapshot</b>, not
+    permanently retired. Returns are measured against the NAR series, the one source running the whole
+    2022–2026 span; the most recent removals have had fewer releases in which to come back, so their
+    "still gone" is the weakest evidence of permanence.`;
 }
 
 function renderFindings(){
@@ -449,139 +495,144 @@ function color(t,hue){const s=cssv('--surface3');
   const sr=parseInt(s.slice(1,3),16),sg=parseInt(s.slice(3,5),16),sb=parseInt(s.slice(5,7),16);
   const e=Math.pow(t,0.6);return `rgb(${lerp(sr,hue[0],e)},${lerp(sg,hue[1],e)},${lerp(sb,hue[2],e)})`;}
 
-/* Project the FSA geojson to SVG paths once (sinusoidal, centred on -96). */
-const proj=(lon,lat)=>[(lon-LONC)*Math.cos(lat*Math.PI/180),lat];
-let PROJ=null;          // {s,ox,gap,y0} — shared by paths and the pin layer
-let FSABB={};           // fsa -> {x0,y0,x1,y1} bbox in viewBox coords, for pin culling
-const projX=(lon,lat)=>proj(lon,lat)[0]*PROJ.s+PROJ.ox;
-const projY=(lon,lat)=>MAPH-MAPPAD-((proj(lon,lat)[1]-PROJ.y0)*PROJ.s)-PROJ.gap;
-function buildPaths(geo){
-  PATHS=[];FSABB={};
-  const rings=f=>{const g=f.geometry;if(!g)return [];return g.type==='Polygon'?[g.coordinates]:g.coordinates;};
-  const b={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
-  geo.features.forEach(f=>rings(f).forEach(poly=>poly.forEach(ring=>{
-    for(const [lon,lat] of ring){const [x,y]=proj(lon,lat);
-      if(x<b.x0)b.x0=x;if(x>b.x1)b.x1=x;if(y<b.y0)b.y0=y;if(y>b.y1)b.y1=y;}})));
-  const bw=b.x1-b.x0,bh=b.y1-b.y0;
-  const s=Math.min((MAPW-2*MAPPAD)/bw,(MAPH-2*MAPPAD)/bh);
-  const ox=MAPPAD+((MAPW-2*MAPPAD)-bw*s)/2 - b.x0*s;
-  const gap=(MAPH-2*MAPPAD-bh*s)/2;
-  PROJ={s,ox,gap,y0:b.y0};
-  geo.features.forEach(f=>{let d='';const bb={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
-    rings(f).forEach(poly=>poly.forEach(ring=>{
-      ring.forEach((pt,i)=>{const px=projX(pt[0],pt[1]),py=projY(pt[0],pt[1]);
-        d+=(i?'L':'M')+px.toFixed(1)+' '+py.toFixed(1)+' ';
-        if(px<bb.x0)bb.x0=px;if(px>bb.x1)bb.x1=px;if(py<bb.y0)bb.y0=py;if(py>bb.y1)bb.y1=py;});
-      d+='Z';}));
-    PATHS.push({fsa:f.properties.CFSAUID,d});FSABB[f.properties.CFSAUID]=bb;});
+/* ── Leaflet FSA choropleth over a greyed CARTO street basemap ──
+   Ported from the per-snapshot maps: the choropleth fades as you zoom in so the
+   street underlay shows through for the individual code pins; exact-coincident
+   pins (e.g. K1A) are fanned out. */
+let map=null,geoLayer=null,pinLayer=null,pinR=null,tileLayer=null,CHOR_LMAX=1;
+const TILE=t=>`https://{s}.basemaps.cartocdn.com/${t}/{z}/{x}/{y}{r}.png`;
+const curTheme=()=>document.documentElement.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+
+/* choropleth fill opacity by zoom — opaque at overview, mostly transparent at pin zoom */
+function fadeOp(){const z=map?map.getZoom():4;
+  if(z<=6)return .82;if(z>=10)return .16;return .82-(z-6)/4*(.82-.16);}
+function styleFSA(f){
+  const fsa=f.properties.CFSAUID,c=(state.byFsa||{})[fsa],meta=METRIC_META[state.curMetric];
+  const v=c?mval(c,state.curMetric):0;
+  return {fillColor:v>0?color(Math.log(v+1)/CHOR_LMAX,meta.hue):cssv('--surface3'),
+    fillOpacity:fadeOp(),color:cssv('--surface2'),weight:.5,opacity:.6};
 }
+function fsaTT(fsa){const c=(state.byFsa||{})[fsa]||{};
+  return `<b>${fsa}</b> · ${fmt(mval(c,'real'))} real changes<br>+${fmt(c.added||0)} added · −${fmt(c.removed||0)} removed<br>${fmt(c.creal||0)} renames · ${fmt(c.csd||0)} muni moves`;}
+function eachFSA(f,layer){const fsa=f.properties.CFSAUID;
+  layer.bindTooltip(()=>fsaTT(fsa),{sticky:true,className:'maptt',direction:'top',opacity:1});
+  layer.on('mouseover',()=>layer.setStyle({weight:1.4,color:cssv('--ink'),opacity:1}));
+  layer.on('mouseout',()=>geoLayer.resetStyle(layer));}
 
-/* zoom / pan — the choropleth lives in <g id=mapg> we transform; pins live in a
-   separate un-transformed layer projected to screen space so their size is constant. */
-const view={k:1,tx:0,ty:0};
-const tf=()=>`translate(${view.tx.toFixed(2)} ${view.ty.toFixed(2)}) scale(${view.k.toFixed(4)})`;
-function clampPan(){const mx=(1-view.k)*MAPW,my=(1-view.k)*MAPH;
-  view.tx=Math.min(0,Math.max(mx,view.tx));view.ty=Math.min(0,Math.max(my,view.ty));}
-function svgPt(cx,cy){const r=$('#map').getBoundingClientRect();
-  return [(cx-r.left)/r.width*MAPW,(cy-r.top)/r.height*MAPH];}
-let pinRAF=0;
-function applyView(){const g=$('#mapg');if(g)g.setAttribute('transform',tf());
-  if(!pinRAF)pinRAF=requestAnimationFrame(()=>{pinRAF=0;renderPins();});}
-function zoomAt(f,cx,cy){const p=svgPt(cx,cy),k2=Math.min(200,Math.max(1,view.k*f));
-  if(k2===view.k)return;
-  view.tx=p[0]-(p[0]-view.tx)*(k2/view.k);view.ty=p[1]-(p[1]-view.ty)*(k2/view.k);
-  view.k=k2;clampPan();if(view.k>=PIN_ZOOM)loadPoints();applyView();}
-function zoomC(f){const r=$('#map').getBoundingClientRect();zoomAt(f,r.left+r.width/2,r.top+r.height/2);}
+/* small custom control to reset the view to the whole of Canada */
+function addResetControl(){
+  const C=L.Control.extend({options:{position:'topleft'},onAdd(){
+    const d=L.DomUtil.create('div','leaflet-bar'),a=L.DomUtil.create('a','',d);
+    a.href='#';a.title='Reset view';a.innerHTML='⟲';a.style.fontSize='15px';
+    L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);
+      if(geoLayer)map.fitBounds(geoLayer.getBounds(),{padding:[10,10]});});
+    return d;}});
+  map.addControl(new C());
+}
+function onZoom(){if(geoLayer)geoLayer.setStyle(styleFSA);
+  if(map.getZoom()>=PIN_MINZOOM)loadPoints();rebuildPins();}
 
-/* ── pin layer: individual codes, revealed on zoom ── */
-const PIN_ZOOM=8, PIN_CAP=9000;
-const PINHUE={a:'--green',r:'--red',n:'--amber',m:'--violet'};
-const BUCKET_LABEL={a:'added',r:'removed',n:'renamed',m:'municipality move'};
-const METRIC_BUCKETS={real:['a','r','n','m'],added:['a'],removed:['r'],creal:['n'],csd:['m']};
-let POINTS=null,pointsLoading=false;
-function loadPoints(){if(POINTS||pointsLoading)return;pointsLoading=true;
-  fetch('data/map_points.json').then(r=>r.json()).then(j=>{POINTS=j;pointsLoading=false;applyView();})
-  .catch(()=>{pointsLoading=false;});}
-function updatePinHint(n){const h=$('#maphint');if(!h)return;
-  if(view.k<PIN_ZOOM){h.innerHTML='scroll to zoom · drag to pan — <b>zoom in to see individual codes</b>';return;}
-  if(!POINTS){h.textContent='loading codes…';return;}
-  const bs=METRIC_BUCKETS[state.curMetric]||['a','r','n','m'];
-  const key=bs.map(b=>`<span class="pk"><i style="background:${cssv(PINHUE[b])}"></i>${BUCKET_LABEL[b]}</span>`).join('');
-  h.innerHTML=key+(n>=PIN_CAP?' · <b>zoom in for more</b>':` · ${fmt(n)} codes`);}
-function renderPins(){
-  const layer=$('#pinl');if(!layer)return;
-  if(view.k<PIN_ZOOM||!POINTS){if(layer.childNodes.length)layer.textContent='';updatePinHint();return;}
-  const x0=(-view.tx)/view.k,y0=(-view.ty)/view.k,x1=(MAPW-view.tx)/view.k,y1=(MAPH-view.ty)/view.k;
-  const buckets=METRIC_BUCKETS[state.curMetric]||['a','r','n','m'];
-  const cols={};buckets.forEach(b=>cols[b]=cssv(PINHUE[b]));
-  const frag=document.createDocumentFragment();let n=0;
-  for(const fsa in POINTS){const bb=FSABB[fsa];
-    if(!bb||bb.x1<x0||bb.x0>x1||bb.y1<y0||bb.y0>y1)continue; // FSA fully off-screen
-    const o=POINTS[fsa];
-    for(const b of buckets){const arr=o[b];if(!arr)continue;
-      for(let i=0;i<arr.length;i++){const p=arr[i],px=projX(p[0],p[1]),py=projY(p[0],p[1]);
-        if(px<x0||px>x1||py<y0||py>y1)continue;
-        frag.appendChild(mk('circle',{cx:(view.tx+view.k*px).toFixed(1),cy:(view.ty+view.k*py).toFixed(1),
-          r:2.3,fill:cols[b],'data-code':p[2],'data-b':b}));
-        if(++n>=PIN_CAP)break;}
-      if(n>=PIN_CAP)break;}
-    if(n>=PIN_CAP)break;}
-  layer.textContent='';layer.appendChild(frag);updatePinHint(n);
+/* re-tile and re-shade when the light/dark theme flips */
+function refreshTheme(){
+  if(tileLayer)tileLayer.setUrl(TILE(curTheme()==='dark'?'dark_all':'light_all'));
+  renderMap(state.curMetric);
 }
 
 function renderMap(metric){
   state.curMetric=metric;const meta=METRIC_META[metric],bf=state.byFsa;
   if(!bf)return; // toggle clicked before the map data arrived — curMetric is kept
-  const max=Math.max(...Object.values(bf).map(c=>mval(c,metric)),1),lmax=Math.log(max+1);
-  const grey=cssv('--surface3'),svg=$('#map');
-  const g=mk('g',{id:'mapg',transform:tf()});
-  const frag=document.createDocumentFragment();
-  PATHS.forEach(p=>{
-    const c=bf[p.fsa],v=c?mval(c,metric):0;
-    frag.appendChild(mk('path',{d:p.d,'data-fsa':p.fsa,fill:v>0?color(Math.log(v+1)/lmax,meta.hue):grey}));
-  });
-  g.appendChild(frag);svg.textContent='';svg.appendChild(g);svg.appendChild(mk('g',{id:'pinl'}));
-  renderPins();
+  const max=Math.max(...Object.values(bf).map(c=>mval(c,metric)),1);
+  CHOR_LMAX=Math.log(max+1);
+  if(geoLayer)geoLayer.setStyle(styleFSA);
   $('#mapCaption').textContent=meta.label;
-  const h=meta.hue;$('#ramp').style.background=`linear-gradient(90deg,${grey},rgb(${h[0]},${h[1]},${h[2]}))`;
+  const grey=cssv('--surface3'),h=meta.hue;
+  $('#ramp').style.background=`linear-gradient(90deg,${grey},rgb(${h[0]},${h[1]},${h[2]}))`;
   $('#rampMax').textContent=fmt(max);
   const top=Object.values(state.byProvince).map(p=>[p,meta.prov(p)]).sort((a,b)=>b[1]-a[1]).slice(0,5);
   $('#topProv').innerHTML=top.map(([p,v])=>`<div class="mini"><span class="k">${esc(p.name)}</span><span class="v num">${fmt(v)}</span></div>`).join('');
+  rebuildPins();
 }
-$('#map').addEventListener('mousemove',e=>{
-  const t=e.target;
-  if(t.tagName==='circle'){const code=t.getAttribute('data-code'),b=t.getAttribute('data-b');
-    showTT(`<div class="tt-t">${code.slice(0,3)} ${code.slice(3)}</div>
-      <div class="tt-r"><span>Change</span><b style="color:${cssv(PINHUE[b])}">${BUCKET_LABEL[b]}</b></div>`,e.clientX,e.clientY);return;}
-  if(t.tagName!=='path'||!state.byFsa){hideTT();return;}
-  const fsa=t.getAttribute('data-fsa'),c=state.byFsa[fsa]||{};
-  showTT(`<div class="tt-t">${fsa} · ${fmt(mval(c,'real'))} real changes</div>
-    <div class="tt-r"><span>Added</span><b>${fmt(c.added)}</b></div>
-    <div class="tt-r"><span>Removed</span><b>${fmt(c.removed)}</b></div>
-    <div class="tt-r"><span>Real renames</span><b>${fmt(c.creal)}</b></div>
-    <div class="tt-r"><span>Municipality moves</span><b>${fmt(c.csd)}</b></div>`,e.clientX,e.clientY);
-});
-$('#map').addEventListener('mouseleave',hideTT);
 $('#mapToggle').onclick=e=>{const b=e.target.closest('button');if(!b)return;
   [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');renderMap(b.dataset.metric);};
 
-/* map zoom / pan interactions. During a drag we only translate the (already
-   built) pin layer instead of re-projecting thousands of dots each frame; the
-   pins are rebuilt once on release. */
-(function(){const svg=$('#map');
-  svg.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.deltaY<0?1.2:1/1.2,e.clientX,e.clientY);},{passive:false});
-  let pan=null;
-  svg.addEventListener('pointerdown',e=>{pan={x:e.clientX,y:e.clientY,tx:view.tx,ty:view.ty};svg.setPointerCapture(e.pointerId);svg.classList.add('grabbing');hideTT();});
-  svg.addEventListener('pointermove',e=>{if(!pan)return;const r=svg.getBoundingClientRect();
-    view.tx=pan.tx+(e.clientX-pan.x)*(MAPW/r.width);view.ty=pan.ty+(e.clientY-pan.y)*(MAPH/r.height);
-    clampPan();const g=$('#mapg');if(g)g.setAttribute('transform',tf());
-    const pl=$('#pinl');if(pl)pl.setAttribute('transform',`translate(${(view.tx-pan.tx).toFixed(1)} ${(view.ty-pan.ty).toFixed(1)})`);});
-  const end=()=>{if(!pan)return;pan=null;svg.classList.remove('grabbing');
-    const pl=$('#pinl');if(pl)pl.removeAttribute('transform');renderPins();};
-  svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
-  $('#zin').onclick=()=>zoomC(1.6);$('#zout').onclick=()=>zoomC(1/1.6);
-  $('#zreset').onclick=()=>{view.k=1;view.tx=0;view.ty=0;applyView();};
-})();
+/* ── pin layer: individual codes changed across all snapshots, revealed on zoom ── */
+const PIN_MINZOOM=9, PIN_CAP=4000;
+const PINHUE={a:'--green',r:'--red',n:'--amber',m:'--violet'};
+const BUCKET_LABEL={a:'added',r:'removed',n:'renamed',m:'municipality move'};
+const METRIC_BUCKETS={real:['a','r','n','m'],added:['a'],removed:['r'],creal:['n'],csd:['m']};
+let POINTS=null,PTINFO={},FBB={},pointsLoading=false;
+function buildPtInfo(){PTINFO={};FBB={};
+  for(const fsa in POINTS){const o=POINTS[fsa];let s=1e9,w=1e9,nn=-1e9,ee=-1e9;
+    for(const b in o)for(const p of o[b]){PTINFO[p[2]]=[p[3],p[4],p[5]];  // code -> [prov,old,new]
+      if(p[1]<s)s=p[1];if(p[1]>nn)nn=p[1];if(p[0]<w)w=p[0];if(p[0]>ee)ee=p[0];}
+    FBB[fsa]=[s,w,nn,ee];}}                                              // [south,west,north,east]
+function loadPoints(){if(POINTS||pointsLoading)return;pointsLoading=true;
+  fetch('data/map_points.json').then(r=>{if(!r.ok)throw 0;return r.json();})
+  .then(j=>{POINTS=j;buildPtInfo();pointsLoading=false;rebuildPins();}).catch(()=>{pointsLoading=false;});}
+function updatePinHint(n){const h=$('#maphint');if(!h)return;
+  if(!map||map.getZoom()<PIN_MINZOOM){h.innerHTML='scroll to zoom · drag to pan — <b>zoom in to see individual codes</b>';return;}
+  if(!POINTS){h.textContent='loading codes…';return;}
+  const bs=METRIC_BUCKETS[state.curMetric]||['a','r','n','m'];
+  const key=bs.map(b=>`<span class="pk"><i style="background:${cssv(PINHUE[b])}"></i>${BUCKET_LABEL[b]}</span>`).join('');
+  h.innerHTML=key+(n>=PIN_CAP?' · <b>zoom in for more</b>':(n?` · ${fmt(n)} codes`:''));}
+
+/* combined tooltip for N codes sharing one coordinate */
+function clusterTT(g){const fsa=g[0][2].slice(0,3),prov=(PTINFO[g[0][2]]||[])[0]||'';
+  const cap=14,arrow=v=>esc(v||'—');
+  const rows=g.slice(0,cap).map(it=>{const inf=PTINFO[it[2]]||[],b=it[3],old=inf[1],nw=inf[2];
+    const mid=b==='a'?(nw?`new in ${esc(nw)}`:'new code')
+      :b==='r'?(old?`removed from ${esc(old)}`:'removed')
+      :`${arrow(old)} → ${arrow(nw)}`;
+    return `<div><b>${it[2].slice(0,3)} ${it[2].slice(3)}</b> <span style="color:${cssv(PINHUE[b])}">${mid}</span></div>`;}).join('');
+  const more=g.length>cap?`<div style="opacity:.65">+${fmt(g.length-cap)} more</div>`:'';
+  return `<b>${fmt(g.length)} codes${prov?' · '+esc(prov):''}</b>`
+    +`<br><span style="opacity:.65">FSA ${esc(fsa)}</span>`
+    +`<div style="margin-top:5px;display:grid;gap:2px">${rows}${more}</div>`;}
+/* one merged node with the code count inside, coloured by the dominant bucket */
+function addCluster(g,cols,stroke){
+  const cnt={};for(const it of g)cnt[it[3]]=(cnt[it[3]]||0)+1;
+  let bb=g[0][3],best=-1;for(const k in cnt)if(cnt[k]>best){best=cnt[k];bb=k;}
+  const n=g.length,d=n>=100?30:n>=10?25:20;
+  const html=`<div class="pinclus" style="background:${cols[bb]};border-color:${stroke};width:${d}px;height:${d}px">${n}</div>`;
+  const m=L.marker([g[0][0],g[0][1]],{icon:L.divIcon({html,className:'',iconSize:[d,d],iconAnchor:[d/2,d/2]})});
+  m.bindTooltip(()=>clusterTT(g),{className:'maptt',direction:'top',opacity:1});
+  pinLayer.addLayer(m);}
+function pinTT(code,b){const inf=PTINFO[code]||[],prov=inf[0]||'',old=inf[1],nw=inf[2];
+  const arrow=v=>esc(v||'—');
+  const mid=b==='a'?(nw?`new in ${esc(nw)}`:'new code')
+    :b==='r'?(old?`removed from ${esc(old)}`:'removed')
+    :`${arrow(old)} → ${arrow(nw)}`;
+  return `<b>${code.slice(0,3)} ${code.slice(3)}${prov?' · '+esc(prov):''}</b>`
+    +`<br><span style="color:${cssv(PINHUE[b])}">${mid}</span>`
+    +`<br><span style="opacity:.65">${BUCKET_LABEL[b]} · FSA ${code.slice(0,3)}</span>`;}
+function addPin(lat,lon,code,b,cols,stroke){
+  const m=L.circleMarker([lat,lon],{renderer:pinR,radius:4,fillColor:cols[b],fillOpacity:1,color:stroke,weight:.6});
+  m.bindTooltip(()=>pinTT(code,b),{className:'maptt',direction:'top',opacity:1});
+  pinLayer.addLayer(m);}
+function rebuildPins(){
+  if(!pinLayer)return;
+  pinLayer.clearLayers();
+  if(!map||map.getZoom()<PIN_MINZOOM||!POINTS){updatePinHint();return;}
+  const b=map.getBounds(),S=b.getSouth(),N=b.getNorth(),W=b.getWest(),E=b.getEast();
+  const buckets=METRIC_BUCKETS[state.curMetric]||['a','r','n','m'];
+  const cols={};buckets.forEach(x=>cols[x]=cssv(PINHUE[x]));
+  const stroke=cssv('--surface');
+  const stacks=new Map();let n=0;                       // key "lon,lat" -> [[lat,lon,code,bucket],…]
+  outer:
+  for(const fsa in POINTS){const bb=FBB[fsa];if(!bb)continue;
+    if(bb[2]<S||bb[0]>N||bb[3]<W||bb[1]>E)continue;      // FSA off-screen
+    const o=POINTS[fsa];
+    for(const bk of buckets){const arr=o[bk];if(!arr)continue;
+      for(const p of arr){const lon=p[0],lat=p[1];
+        if(lat<S||lat>N||lon<W||lon>E)continue;
+        const key=lon+','+lat;let g=stacks.get(key);if(!g){g=[];stacks.set(key,g);}
+        g.push([lat,lon,p[2],bk]);
+        if(++n>=PIN_CAP)break outer;}}}
+  for(const g of stacks.values()){
+    if(g.length===1)addPin(g[0][0],g[0][1],g[0][2],g[0][3],cols,stroke);
+    else addCluster(g,cols,stroke);}
+  updatePinHint(n);
+}
 
 function renderIndepth(){
   const s=state.summary,tot=s.city_total;
@@ -630,7 +681,7 @@ async function lazyTable(name,file,rowFn,searchFields){
   $('#'+name+'-search').oninput=apply;provSel.onchange=apply;$('#'+name+'-more').onclick=more;apply();
 }
 function renderAddedRow(r){const tr=document.createElement('tr');tr.innerHTML=`<td class="pc c-added">${r.pc}</td><td>${r.prov||''}</td><td>${esc(r.city||'')}</td><td>${r.fsa||''}</td><td class="num">${r.date}</td>`;return tr;}
-function renderRemovedRow(r){const tr=document.createElement('tr');tr.innerHTML=`<td class="pc c-removed">${r.pc}</td><td>${r.prov||''}</td><td>${esc(r.city||'')}</td><td>${r.fsa||''}</td><td class="num">${r.date}</td>`;return tr;}
+function renderRemovedRow(r){const tr=document.createElement('tr');tr.innerHTML=`<td class="pc c-removed">${r.pc}</td><td>${r.prov||''}</td><td>${esc(r.city||'')}</td><td>${r.fsa||''}</td><td class="num">${r.date}</td><td class="num">${r.back?`<span class="back-date">${r.back}</span>`:'<span class="still-gone">still gone</span>'}</td>`;return tr;}
 
 async function lazyCity(){
   if(loaded.city)return;loaded.city=true;
