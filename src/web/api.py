@@ -134,7 +134,8 @@ def list_changes(
         params.append(change_subtype)
     if substantive_only:
         conditions.append(
-            "(change_subtype IS NULL OR change_subtype IN ('substantive', 'boundary', 'rename'))"
+            "(change_type != 'city_changed' "
+            "OR change_subtype IN ('substantive', 'boundary', 'rename'))"
         )
     if province:
         conditions.append("province_abbr = ?")
